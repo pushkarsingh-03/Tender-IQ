@@ -1,0 +1,17 @@
+{
+  "name": "tenderiq",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently \"bun run server.ts\" \"bun run --cwd client dev\"",
+    "server": "bun run server.ts",
+    "client": "bun run --cwd client dev",
+    "migrate": "bun run migrate.ts",
+    "build": "bun run --cwd client build"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

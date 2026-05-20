@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "workspace": {
+    "name": "TENDERIQ",
+    "createdAt": 1779275196459,
+    "preset": "starter"
+  },
+  "authorizedRoots": [
+    "/Users/rawmo/Documents/TENDERIQ"
+  ],
+  "reload": null
+}

@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TenderIQ — Vardhman Hydraulic Hoses</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#F5F4F0;color:#1A1A18;font-size:13px}
+:root{--primary:#1A1A18;--bg:#F5F4F0;--card:#FFFFFF;--border:#E2E0DA;--muted:#888880;--blue:#185FA5;--green:#3B6D11;--amber:#854F0B;--red:#A32D2D;--blue-bg:#E6F1FB;--green-bg:#EAF3DE;--amber-bg:#FAEEDA;--red-bg:#FCEBEB}
+input,select,textarea{background:#fff;color:#1A1A18;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px;padding:7px 10px;outline:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:#888}
+button{font-family:inherit;cursor:pointer;border:none}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.badge{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:500;display:inline-block;white-space:nowrap}
+.btn-primary{background:var(--primary);color:#fff;border-radius:6px;padding:8px 16px;font-size:12px;font-weight:500;border:none;cursor:pointer}
+.btn-primary:hover{background:#333}
+.btn-ghost{background:transparent;border:1px solid var(--border);border-radius:6px;padding:7px 13px;font-size:12px;color:var(--muted);cursor:pointer}
+.btn-ghost:hover{background:#eee}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.25rem}
+.metric{background:#F9F8F5;border-radius:8px;padding:12px 14px}
+.metric label{font-size:11px;color:var(--muted);display:block;margin-bottom:3px}
+.metric .val{font-size:20px;font-weight:600}
+#notif{position:fixed;top:16px;right:20px;z-index:999;display:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid .full{grid-column:1/-1}
+.form-label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;font-weight:500}
+</style>
+</head>
+<body>
+
+<div id="notif"></div>
+<div id="app" style="display:flex;min-height:100vh"></div>
+
+<script>
+// ─── FULL EXCEL DATA ──────────────────────────────────────────────────────────
+const EXCEL_DATA = [{"id":"GEM-001","gemId":"GEM/2022/B/2598447","refNumber":"GEM/2022/B/2598447","title":"HOSE, SS BRAIDED FLEXIBLE HOSE...","department":"Department of Atomic Energy","organization":"Department of Atomic Energy","ministry":"PMO","tenderType":"BID","status":"L2/L3","wonLost":"Lost","bidStatus":"Financial Evaluation","submissionDate":"01-10-2022","endDate":"31-10-2022","bidAmount":0,"l1Price":0,"l1Bidder":"","orderValue":0,"quantity":510,"tenderValue":0,"emdAmount":0,"location":"","category":"PMO","riskLevel":"Low","deadlines":{"technical":"","financial":"31-10-2022"},"contact":"","pendingAction":"","latestUpdate":"Scheduled Financial Evaluation","remarks":"Scheduled Financial Evaluation","eligibility":"","documents":[],"contractNo":"","contractDate":"","contractStatus":"","consigneeAddress":"","officeName":"","evaluationMethod":"","aiSummary":"Scheduled Financial Evaluation","timeline":[{"date":"01-10-2022","event":"Tender filed","type":"filed"},{"date":"31-10-2022","event":"Bid closing date","type":"update"}],"_sno":1},{"id":"GEM-002","gemId":"GEM/2022/B/2621829","refNumber":"GEM/2022/B/2621829","title":"4615020504, 4605060614 (Flexible hose steam service)","department":"Materials Department","organization":"Materials Department","ministry":"Ministry of Petroleum and Natural Gas","tenderType":"BID","status":"L2/L3","wonLost":"Lost","bidStatus":"Financial Evaluation","submissionDate":"10-10-2022","endDate":"31-10-2022","bidAmount":475000,"l1Price":305000,"l1Bidder":"SIT FLEXIBLE HOSE PRIVATE LIMITED(MSE,MII)","orderValue":0,"quantity":70,"tenderValue":0,"emdAmount":0,"location":"","category":"Ministry of Petroleum and Natural Gas","riskLevel":"Low","deadlines":{"technical":"","financial":"31-10-2022"},"contact":"","pendingAction":"","latestUpdate":"Financial Evaluation","remarks":"","eligibility":"","documents":[],"contractNo":"","contractDate":"","contractStatus":"","consigneeAddress":"","officeName":"","evaluationMethod":"","aiSummary":"Our bid: ₹475,000 | L1: SIT FLEXIBLE HOSE PRIVATE LIMITED(MSE,MII) @ ₹305,000","timeline":[{"date":"10-10-2022","event":"Tender filed","type":"filed"},{"date":"31-10-2022","event":"Bid closing date","type":"update"}],"_sno":2},{"id":"GEM-003","gemId":"GEM/2023/B/3305462","refNumber":"GEM/2023/B/3305462","title":"CARBON FREE HOSE PIPE DIA 19 MM...","department":"Department of Defence Production","organization":"Department of Defence Production","ministry":"Ministry of Defence","tenderType":"BID","status":"Awarded","wonLost":"WON","bidStatus":"Bid Award","submissionDate":"27-03-2023","endDate":"17-04-2023","bidAmount":21500,"l1Price":21500,"l1Bidder":"Vardhman Hydraulic Hoses Pvt Ltd","orderValue":21500,"quantity":100,"tenderValue":21500,"emdAmount":0,"location":"Ordnance Factory Medak","category":"Ministry of Defence","riskLevel":"Low","deadlines":{"technical":"","financial":"17-04-2023"},"contact":"","pendingAction":"","latestUpdate":"Contract: GEMC-511687701456854 | In Progress","remarks":"Contract: GEMC-511687701456854 | Date: 24/05/2023 | Contract Status: In Progress","eligibility":"","documents":[],"contractNo":"GEMC-511687701456854","contractDate":"24/05/2023","contractStatus":"In Progress","consigneeAddress":"Ordnance Factory Medak, Yeddumailaram","officeName":"","evaluationMethod":"","aiSummary":"Our bid: ₹21,500 | L1: Vardhman @ ₹21,500 | Contract: GEMC-511687701456854","timeline":[{"date":"27-03-2023","event":"Tender filed","type":"filed"},{"date":"17-04-2023","event":"Bid closing date","type":"update"},{"date":"24/05/2023","event":"Contract: GEMC-511687701456854","type":"success"}],"_sno":3},{"id":"GEM-047","gemId":"GEM/2025/B/6832337","refNumber":"GEM/2025/B/6832337","title":"HOSE: HVY, IS5137, FLG, 100MM, 100MM","department":"Na","organization":"Ntpc Limited","ministry":"Ministry Of Power","tenderType":"BID","status":"Awarded","wonLost":"WON","bidStatus":"Financially Evaluated","submissionDate":"30-10-2025","endDate":"14-11-2025","bidAmount":459000,"l1Price":459000,"l1Bidder":"VARDHMAN HYDRAULIC HOSES PRIVATE LIMITED(MSE)","orderValue":459000,"quantity":180,"tenderValue":459000,"emdAmount":0,"location":"NTPC Korba","category":"Ministry Of Power","riskLevel":"Low","deadlines":{"technical":"","financial":"14-11-2025"},"contact":"","pendingAction":"Follow up on contract","latestUpdate":"Contract: GEMC-511687729852400 | Contract Received","remarks":"Contract: GEMC-511687729852400 | Date: 24/02/2026 | Status: Contract Received","eligibility":"Total value wise evaluation","documents":[],"contractNo":"GEMC-511687729852400","contractDate":"24/02/2026","contractStatus":"Contract Received","consigneeAddress":"NTPC Stores Korba Super Thermal Power Station","officeName":"Ussc Cpg2 Raipur","evaluationMethod":"Total value wise evaluation","aiSummary":"Our bid: ₹459,000 | L1: VARDHMAN @ ₹459,000 | Contract: GEMC-511687729852400","timeline":[{"date":"30-10-2025","event":"Tender filed","type":"filed"},{"date":"14-11-2025","event":"Bid closing date","type":"update"},{"date":"24/02/2026","event":"Contract: GEMC-511687729852400","type":"success"}],"_sno":47},{"id":"GEM-051","gemId":"GEM/2025/B/6897058","refNumber":"GEM/2025/B/6897058","title":"Blast Cleaning Hose","department":"Department Of Heavy Industry","organization":"Bharat Heavy Electricals Limited (bhel)","ministry":"Ministry Of Heavy Industries And Public Enterprises","tenderType":"BID","status":"Awarded","wonLost":"WON","bidStatus":"Evaluation Completed","submissionDate":"15-11-2025","endDate":"28-11-2025","bidAmount":74400,"l1Price":74400,"l1Bidder":"VARDHMAN HYDRAULIC HOSES PRIVATE LIMITED(MSE,MII)","orderValue":74400,"quantity":120,"tenderValue":74400,"emdAmount":0,"location":"Indira Gandhi Complex","category":"Ministry Of Heavy Industries And Public Enterprises","riskLevel":"Low","deadlines":{"technical":"","financial":"28-11-2025"},"contact":"","pendingAction":"","latestUpdate":"Contract: GEMC-511687711648405 | In Progress","remarks":"Contract: GEMC-511687711648405 | Date: 04/12/2025 | Status: In Progress","eligibility":"Total value wise evaluation","documents":[],"contractNo":"GEMC-511687711648405","contractDate":"04/12/2025","contractStatus":"In Progress","consigneeAddress":"632406,INDIRA GANDHI COMPLEX","officeName":"Boiler Auxiliaries Plant Ranipet","evaluationMethod":"Total value wise evaluation","aiSummary":"Our bid: ₹74,400 | L1: VARDHMAN @ ₹74,400 | Contract: GEMC-511687711648405","timeline":[{"date":"15-11-2025","event":"Tender filed","type":"filed"},{"date":"28-11-2025","event":"Bid closing date","type":"update"},{"date":"04/12/2025","event":"Contract: GEMC-511687711648405","type":"success"}],"_sno":51},{"id":"GEM-088","gemId":"GEM/2026/B/7408895","refNumber":"GEM/2026/B/7408895","title":"SS Hoses & Corrugated Hoses - Multiple Types for Durgapur Steel Plant","department":"Steel Authority Of India Limited","organization":"Steel Authority Of India Limited","ministry":"Ministry Of Steel","tenderType":"BID","status":"Submitted","wonLost":"","bidStatus":"Bid Submitted","submissionDate":"01-04-2026","endDate":"11-04-2026","bidAmount":882020,"l1Price":0,"l1Bidder":"","orderValue":0,"quantity":357,"tenderValue":0,"emdAmount":0,"location":"Durgapur Steel Plant","category":"Ministry Of Steel","riskLevel":"Low","deadlines":{"technical":"","financial":"11-04-2026"},"contact":"","pendingAction":"Monitor evaluation status","latestUpdate":"Two Packet Bid | MSE PP: Yes (L1+15%)","remarks":"Two Packet Bid | MSE PP: Yes (L1+15%) | Bid closes 11-Apr-2026 19:00","eligibility":"Total value wise evaluation","documents":[],"contractNo":"","contractDate":"","contractStatus":"","consigneeAddress":"Central Stores Department, Durgapur Steel Plant, Durgapur-713203","officeName":"Durgapur","evaluationMethod":"Total value wise evaluation","aiSummary":"Our bid: ₹882,020","timeline":[{"date":"01-04-2026","event":"Tender filed","type":"filed"},{"date":"11-04-2026","event":"Bid closing date","type":"update"}],"_sno":88},{"id":"GEM-092","gemId":"GEM/2026/B/7413928","refNumber":"GEM/2026/B/7413928","title":"Procurement of Utility Service Hoses for GAIL Usar","department":"Gail India Limited","organization":"Gail India Limited","ministry":"Ministry Of Petroleum And Natural Gas","tenderType":"BID","status":"Submitted","wonLost":"","bidStatus":"Bid Submitted","submissionDate":"15-04-2026","endDate":"06-05-2026","bidAmount":344878,"l1Price":0,"l1Bidder":"","orderValue":0,"quantity":352,"tenderValue":0,"emdAmount":0,"location":"GAIL Usar Petrochemical Complex","category":"Ministry Of Petroleum And Natural Gas","riskLevel":"Low","deadlines":{"technical":"","financial":"06-05-2026"},"contact":"","pendingAction":"Monitor evaluation status","latestUpdate":"Two Packet Bid | MSE PP: Yes | Delivery: 90 days","remarks":"Two Packet Bid | BOQ: Procurement of Utility Service Hoses for GAIL Usar | MSE PP: Yes (L1+15%) | Delivery: 90 days","eligibility":"Item wise evaluation","documents":[],"contractNo":"","contractDate":"","contractStatus":"","consigneeAddress":"GAIL PDH PP Project, Usar Petrochemical Complex, Raigad Maharashtra - 402203","officeName":"Usar","evaluationMethod":"Item wise evaluation","aiSummary":"Our bid: ₹344,878","timeline":[{"date":"15-04-2026","event":"Tender filed","type":"filed"},{"date":"06-05-2026","event":"Bid closing date","type":"update"}],"_sno":92},{"id":"GEM-093","gemId":"GEM/2026/B/7489812","refNumber":"GEM/2026/B/7489812","title":"STAINLESS STEEL HOSE | Flexible Corrugated SS Hose with Single Braiding","department":"Department Of Heavy Industry","organization":"Bharat Heavy Electricals Limited (bhel)","ministry":"Ministry Of Heavy Industries And Public Enterprises","tenderType":"BID","status":"Submitted","wonLost":"","bidStatus":"Bid Submitted","submissionDate":"30-04-2026","endDate":"11-05-2026","bidAmount":366000,"l1Price":0,"l1Bidder":"","orderValue":0,"quantity":60,"tenderValue":0,"emdAmount":0,"location":"BHEL Khailar, Jhansi","category":"Ministry Of Heavy Industries And Public Enterprises","riskLevel":"Low","deadlines":{"technical":"","financial":"11-05-2026"},"contact":"","pendingAction":"Monitor evaluation status","latestUpdate":"Single Packet Bid | MSE PP: Yes | Delivery: 60 days","remarks":"Single Packet Bid | MSE PP: Yes (L1+15%) | Payment: 45 days CRAC | Delivery: 60 days","eligibility":"Total value wise evaluation","documents":[],"contractNo":"","contractDate":"","contractStatus":"","consigneeAddress":"BHEL Khailar, Jhansi, Uttar Pradesh - 284120","officeName":"10330014-tp Jhansi","evaluationMethod":"Total value wise evaluation","aiSummary":"Our bid: ₹366,000","timeline":[{"date":"30-04-2026","event":"Tender filed","type":"filed"},{"date":"11-05-2026","event":"Bid closing date","type":"update"}],"_sno":93}];
+
+const STATUSES=["Submitted","Under Review","Technical Bid Opened","Technically Qualified","Technically Rejected","Financial Bid Opened","L1","L2/L3","Awarded","Work Order Issued","Closed","Cancelled"];
+const SC={"Submitted":{bg:"#E6F1FB",tx:"#185FA5",br:"#85B7EB"},"Under Review":{bg:"#FAEEDA",tx:"#854F0B",br:"#EF9F27"},"Technical Bid Opened":{bg:"#FAEEDA",tx:"#854F0B",br:"#EF9F27"},"Technically Qualified":{bg:"#EAF3DE",tx:"#3B6D11",br:"#97C459"},"Technically Rejected":{bg:"#FCEBEB",tx:"#A32D2D",br:"#F09595"},"Financial Bid Opened":{bg:"#E1F5EE",tx:"#0F6E56",br:"#5DCAA5"},"L1":{bg:"#EAF3DE",tx:"#27500A",br:"#639922"},"L2/L3":{bg:"#FAEEDA",tx:"#633806",br:"#BA7517"},"Awarded":{bg:"#EAF3DE",tx:"#173404",br:"#3B6D11"},"Work Order Issued":{bg:"#E1F5EE",tx:"#085041",br:"#1D9E75"},"Closed":{bg:"#F5F4F0",tx:"#444441",br:"#888780"},"Cancelled":{bg:"#FCEBEB",tx:"#791F1F",br:"#E24B4A"}};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let tenders=[];
+let view="dashboard",selectedId=null,searchQ="",filterStatus="All",filterTab="all";
+let aiProcessing=false,manualText="",emailText="",aiResult=null,pendingUpdate=null;
+let addMode="paste",pasteText="",pasteProcessing=false,parsedPreview=null;
+
+// ── newForm: single source of truth, read directly from DOM inputs on save ────
+let newForm={gemId:"",title:"",organization:"",department:"",ministry:"",tenderType:"BID",quantity:"",submissionDate:"",endDate:"",bidAmount:"",l1Price:"",l1Bidder:"",contractNo:"",contractDate:"",orderValue:"",contractStatus:"",consigneeAddress:"",officeName:"",evaluationMethod:"",wonLost:"",status:"Submitted",remarks:""};
+
+function initData(){
+  try{const s=localStorage.getItem("tiq_v4");if(s){tenders=JSON.parse(s);}else{tenders=JSON.parse(JSON.stringify(EXCEL_DATA));saveLocal();}}
+  catch(e){tenders=JSON.parse(JSON.stringify(EXCEL_DATA));}
+}
+function saveLocal(){try{localStorage.setItem("tiq_v4",JSON.stringify(tenders));}catch(e){}}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function fmtCur(v){const n=Number(v);if(!n||isNaN(n))return"—";if(n>=10000000)return"₹"+(n/10000000).toFixed(2)+" Cr";if(n>=100000)return"₹"+(n/100000).toFixed(2)+"L";return"₹"+n.toLocaleString("en-IN");}
+function fmtDate(d){if(!d||d==="N/A"||d==="")return"—";try{const dt=new Date(d);if(isNaN(dt))return d;return dt.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});}catch{return d;}}
+function nextId(){return"GEM-"+String(tenders.length+1).padStart(3,"0");}
+
+function showNotif(msg,type="ok"){
+  const el=document.getElementById("notif");
+  if(!el)return;
+  el.textContent=(type==="err"?"✗ ":"✓ ")+msg;
+  el.style.display="block";
+  el.style.background=type==="err"?"#FCEBEB":"#EAF3DE";
+  el.style.color=type==="err"?"#A32D2D":"#3B6D11";
+  el.style.border="1px solid "+(type==="err"?"#F09595":"#97C459");
+  setTimeout(()=>{el.style.display="none";},3500);
+}
+
+function statusBadge(s,sm){const c=SC[s]||{bg:"#F5F4F0",tx:"#444",br:"#ccc"};return`<span class="badge" style="background:${c.bg};color:${c.tx};border:1px solid ${c.br};font-size:${sm?10:11}px">${s}</span>`;}
+function wonBadge(w){const map={"WON":{bg:"#EAF3DE",tx:"#3B6D11"},"Lost":{bg:"#FCEBEB",tx:"#A32D2D"},"Pending":{bg:"#FAEEDA",tx:"#854F0B"},"Cancelled":{bg:"#F5F4F0",tx:"#888"}};const c=map[w]||map["Pending"];return`<span class="badge" style="background:${c.bg};color:${c.tx};font-size:10px">${w||"Pending"}</span>`;}
+function metricCard(label,value,color){return`<div class="metric"><label>${label}</label><div class="val" style="color:${color||"var(--primary)"}">${value}</div></div>`;}
+
+// ─── READ ALL FORM FIELDS LIVE FROM DOM ───────────────────────────────────────
+// This is the KEY fix — we read values directly from DOM inputs, not from JS object
+// so we never have stale state issues
+function readNewFormFromDOM(){
+  const fields=["gemId","title","organization","department","ministry","tenderType","quantity","submissionDate","endDate","bidAmount","l1Price","l1Bidder","contractNo","contractDate","orderValue","contractStatus","consigneeAddress","officeName","evaluationMethod","remarks"];
+  const form={};
+  fields.forEach(f=>{
+    const el=document.getElementById("nf_"+f);
+    form[f]=el?el.value:"";
+  });
+  const statusEl=document.getElementById("nf_status");
+  const wonLostEl=document.getElementById("nf_wonLost");
+  form.status=statusEl?statusEl.value:"Submitted";
+  form.wonLost=wonLostEl?wonLostEl.value:"";
+  return form;
+}
+
+// ─── FILTERS ──────────────────────────────────────────────────────────────────
+function getFiltered(){
+  return tenders.filter(t=>{
+    const q=searchQ.toLowerCase();
+    const mq=!q||(t.title||"").toLowerCase().includes(q)||(t.gemId||"").toLowerCase().includes(q)||(t.department||"").toLowerCase().includes(q)||(t.organization||"").toLowerCase().includes(q)||(t.l1Bidder||"").toLowerCase().includes(q);
+    const ms=filterStatus==="All"||t.status===filterStatus;
+    let mt=true;
+    if(filterTab==="active")mt=!["Closed","Cancelled","L2/L3","Technically Rejected"].includes(t.status);
+    if(filterTab==="won")mt=t.wonLost==="WON"||["L1","Awarded","Work Order Issued"].includes(t.status);
+    if(filterTab==="lost")mt=t.wonLost==="Lost"||["L2/L3","Technically Rejected"].includes(t.status);
+    if(filterTab==="pending")mt=!["WON","Lost","Cancelled"].includes(t.wonLost)&&t.wonLost!=="CANCELLED";
+    return mq&&ms&&mt;
+  });
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function renderDashboard(){
+  const won=tenders.filter(t=>t.wonLost==="WON").length;
+  const lost=tenders.filter(t=>t.wonLost==="Lost").length;
+  const pending=tenders.filter(t=>!["WON","Lost","Cancelled"].includes(t.wonLost)&&t.wonLost!=="CANCELLED").length;
+  const totalBid=tenders.reduce((s,t)=>s+(Number(t.bidAmount)||0),0);
+  const totalWon=tenders.filter(t=>t.wonLost==="WON").reduce((s,t)=>s+(Number(t.orderValue||t.bidAmount)||0),0);
+  const winRate=tenders.length?Math.round((won/tenders.length)*100):0;
+
+  const dist=Object.entries(SC).map(([s,c])=>{const cnt=tenders.filter(t=>t.status===s).length;if(!cnt)return"";const w=Math.max((cnt/tenders.length)*150,8);return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><div style="width:${w}px;height:5px;background:${c.br};border-radius:3px;flex-shrink:0"></div><span style="font-size:12px;color:var(--muted)">${s}</span><span style="font-size:12px;font-weight:600;margin-left:auto">${cnt}</span></div>`;}).join("");
+
+  const topComp={};
+  tenders.filter(t=>t.l1Bidder&&t.wonLost==="Lost").forEach(t=>{const n=(t.l1Bidder||"").split("(")[0].trim();if(n)topComp[n]=(topComp[n]||0)+1;});
+  const compHtml=Object.entries(topComp).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([n,c])=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px">${n}</span><span style="font-size:12px;font-weight:600;color:var(--red);flex-shrink:0;margin-left:8px">${c}x</span></div>`).join("");
+
+  const recent=tenders.slice(0,6).map(t=>`<div onclick="selectTender('${t.id}')" style="padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px"><div style="min-width:0"><p style="margin:0;font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.title}</p><p style="margin:2px 0 0;font-size:11px;color:var(--muted)">${t.gemId}</p></div>${wonBadge(t.wonLost||"Pending")}</div>`).join("");
+
+  return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+    <div><h1 style="font-size:20px;font-weight:700">Dashboard</h1><p style="color:var(--muted);font-size:13px;margin-top:2px">${tenders.length} tenders tracked · Vardhman Hydraulic Hoses</p></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-ghost" onclick="exportExcel()">⬇ Export Excel</button>
+      <label class="btn-ghost" style="cursor:pointer">⬆ Import Excel<input type="file" accept=".xlsx" onchange="importExcel(this)" style="display:none;width:auto"></label>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px">
+    ${metricCard("Total Tenders",tenders.length)}
+    ${metricCard("WON",won,"var(--green)")}
+    ${metricCard("Lost",lost,"var(--red)")}
+    ${metricCard("Pending",pending,"var(--amber)")}
+    ${metricCard("Win Rate",winRate+"%",winRate>=20?"var(--green)":"var(--amber)")}
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px">
+    ${metricCard("Total Bid Value",fmtCur(totalBid),"var(--blue)")}
+    ${metricCard("Total Won Value",fmtCur(totalWon),"var(--green)")}
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+    <div class="card"><p style="font-size:13px;font-weight:600;margin-bottom:12px">Status Distribution</p>${dist}</div>
+    <div class="card"><p style="font-size:13px;font-weight:600;margin-bottom:12px">Top Competitors (L1 wins)</p>${compHtml||'<p style="font-size:12px;color:var(--muted)">No data yet</p>'}</div>
+    <div class="card"><p style="font-size:13px;font-weight:600;margin-bottom:12px">Recent Tenders</p>${recent}</div>
+  </div>`;
+}
+
+// ─── TENDER LIST ──────────────────────────────────────────────────────────────
+function renderTenderList(){
+  const filtered=getFiltered();
+  const won=tenders.filter(t=>t.wonLost==="WON").length;
+  const lost=tenders.filter(t=>t.wonLost==="Lost").length;
+  const pending=tenders.filter(t=>!["WON","Lost","Cancelled"].includes(t.wonLost)&&t.wonLost!=="CANCELLED").length;
+
+  const tabs=[["all","All ("+tenders.length+")"],["won","WON ("+won+")"],["lost","Lost ("+lost+")"],["pending","Pending ("+pending+")"]];
+  const tabHtml=tabs.map(([id,lbl])=>`<button onclick="setTab('${id}')" style="padding:5px 13px;border-radius:20px;font-size:12px;font-weight:500;background:${filterTab===id?"var(--primary)":"transparent"};color:${filterTab===id?"#fff":"var(--muted)"};border:1px solid var(--border);cursor:pointer">${lbl}</button>`).join("");
+  const statusOpts=["All",...STATUSES].map(s=>`<option${filterStatus===s?" selected":""}>${s}</option>`).join("");
+
+  const rows=filtered.length===0?`<div style="text-align:center;padding:3rem;color:var(--muted)"><p style="font-size:32px">📋</p><p style="margin-top:8px">No tenders match filters</p></div>`:
+  filtered.map(t=>`<div onclick="selectTender('${t.id}')" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;cursor:pointer;margin-bottom:8px">
+    <div style="display:flex;gap:10px;align-items:flex-start;justify-content:space-between">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:5px;flex-wrap:wrap">
+          <span style="font-size:10px;color:var(--muted);font-family:monospace">${t.gemId}</span>
+          ${wonBadge(t.wonLost||"Pending")}
+          <span class="badge" style="background:#F5F4F0;color:var(--muted);font-size:10px">${t.tenderType||"BID"}</span>
+        </div>
+        <p style="margin:0 0 3px;font-size:13px;font-weight:500">${t.title}</p>
+        <p style="margin:0;font-size:12px;color:var(--muted)">${t.organization||t.department} · ${t.ministry||""}</p>
+      </div>
+      <div style="text-align:right;flex-shrink:0;min-width:100px">
+        ${t.bidAmount?'<p style="margin:0;font-size:13px;font-weight:600">'+fmtCur(t.bidAmount)+'</p><p style="margin:1px 0;font-size:10px;color:var(--muted)">Our bid</p>':""}
+        ${t.l1Price?'<p style="margin:2px 0 0;font-size:11px;color:var(--muted)">L1: '+fmtCur(t.l1Price)+'</p>':""}
+        <p style="margin:4px 0 0;font-size:10px;color:var(--muted)">${fmtDate(t.endDate)}</p>
+      </div>
+    </div>
+    ${t.l1Bidder?'<p style="margin:5px 0 0;font-size:11px;color:var(--muted)">L1: '+t.l1Bidder.slice(0,60)+'</p>':""}
+    ${t.remarks?'<p style="margin:4px 0 0;font-size:11px;color:var(--muted);font-style:italic">'+t.remarks.slice(0,90)+(t.remarks.length>90?"...":"")+'</p>':""}
+  </div>`).join("");
+
+  return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <h1 style="font-size:18px;font-weight:700">All Tenders</h1>
+    <div style="display:flex;gap:8px">
+      <button class="btn-ghost" onclick="exportExcel()">⬇ Export Excel</button>
+      <label class="btn-ghost" style="cursor:pointer">⬆ Import Excel<input type="file" accept=".xlsx" onchange="importExcel(this)" style="display:none;width:auto"></label>
+      <button class="btn-primary" onclick="goView('new')">+ Add Tender</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${tabHtml}</div>
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <input id="sq" value="${searchQ.replace(/"/g,'&quot;')}" oninput="setSearch(this.value)" placeholder="Search GEM ID, product, department, competitor..." style="flex:1">
+    <select onchange="setFilterStatus(this.value)" style="min-width:150px;width:auto">${statusOpts}</select>
+  </div>
+  ${rows}`;
+}
+
+// ─── TENDER DETAIL ────────────────────────────────────────────────────────────
+function renderDetail(){
+  const t=tenders.find(x=>x.id===selectedId);
+  if(!t)return`<button onclick="goView('tenders')" class="btn-ghost" style="margin-bottom:12px">← Back</button><p>Not found</p>`;
+  const gap=t.bidAmount&&t.l1Price?((t.bidAmount-t.l1Price)/t.l1Price*100).toFixed(1):null;
+  const tlHtml=(t.timeline||[]).slice().reverse().map(e=>{
+    const cols={filed:"var(--blue)",update:"var(--amber)",success:"var(--green)",danger:"var(--red)"};
+    return`<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)"><div style="width:8px;height:8px;border-radius:50%;background:${cols[e.type]||"var(--muted)"};margin-top:4px;flex-shrink:0"></div><div><p style="margin:0;font-size:12px;font-weight:500">${e.event}</p><p style="margin:0;font-size:11px;color:var(--muted)">${fmtDate(e.date)}</p></div></div>`;
+  }).join("");
+  const statusOpts=STATUSES.map(s=>`<option${t.status===s?" selected":""}>${s}</option>`).join("");
+  return`<button onclick="goView('tenders')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;margin-bottom:14px">← Back to all tenders</button>
+  <div class="card" style="margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+      <div style="flex:1"><div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">${wonBadge(t.wonLost||"Pending")}${statusBadge(t.status)}<span style="font-size:11px;color:var(--muted);font-family:monospace">${t.gemId}</span></div>
+      <p style="font-size:16px;font-weight:600;margin-bottom:4px">${t.title}</p>
+      <p style="font-size:13px;color:var(--muted)">${t.organization} · ${t.ministry}</p></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+        <label style="font-size:12px;color:var(--muted)">Status:</label>
+        <select onchange="updateTenderStatus('${t.id}',this.value)" style="font-size:12px;padding:5px 8px;width:auto">${statusOpts}</select>
+        <button onclick="deleteTender('${t.id}')" style="background:var(--red-bg);color:var(--red);border:1px solid #F09595;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer">✕ Delete</button>
+      </div>
+    </div>
+    ${t.remarks?`<div style="margin-top:12px;padding:10px 14px;background:var(--blue-bg);border-left:3px solid #378ADD;border-radius:0 6px 6px 0"><p style="margin:0;font-size:13px;color:#0C447C">${t.remarks}</p></div>`:""}
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+    ${metricCard("Our Bid",t.bidAmount?fmtCur(t.bidAmount):"—","var(--blue)")}
+    ${metricCard("L1 Price",t.l1Price?fmtCur(t.l1Price):"—","var(--green)")}
+    ${metricCard("Gap vs L1",gap!==null?(gap>0?"+"+gap+"%":gap+"%"):"—",gap>0?"var(--red)":"var(--green)")}
+    ${metricCard("Order Value",t.orderValue?fmtCur(t.orderValue):"—","var(--amber)")}
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="card"><p style="font-size:13px;font-weight:600;margin-bottom:10px">Tender Details</p>
+      ${[["GEM Tender ID",t.gemId],["Buyer",t.organization],["Department",t.department],["Ministry",t.ministry],["Quantity",t.quantity?t.quantity+" units":"—"],["Start Date",fmtDate(t.submissionDate)],["End Date",fmtDate(t.endDate)],["Bid Status",t.bidStatus],["Eval. Method",t.evaluationMethod],["Office",t.officeName],["Consignee",(t.consigneeAddress||"").slice(0,60)||"—"]].map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);gap:8px"><span style="color:var(--muted);flex-shrink:0;font-size:12px">${k}</span><span style="text-align:right;font-size:12px">${v||"—"}</span></div>`).join("")}
+    </div>
+    <div class="card"><p style="font-size:13px;font-weight:600;margin-bottom:10px">L1 & Contract Info</p>
+      ${[["L1 Bidder",t.l1Bidder||"—"],["L1 Price",t.l1Price?fmtCur(t.l1Price):"—"],["Contract No.",t.contractNo||"—"],["Contract Date",fmtDate(t.contractDate)],["Contract Status",t.contractStatus||"—"],["Order Value",t.orderValue?fmtCur(t.orderValue):"—"]].map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);gap:8px"><span style="color:var(--muted);flex-shrink:0;font-size:12px">${k}</span><span style="text-align:right;font-size:12px">${v||"—"}</span></div>`).join("")}
+      <p style="font-size:13px;font-weight:600;margin:14px 0 10px">Activity Timeline</p>
+      <div style="max-height:180px;overflow-y:auto">${tlHtml||'<p style="font-size:12px;color:var(--muted)">No activity recorded</p>'}</div>
+    </div>
+  </div>`;
+}
+
+// ─── AI UPDATES VIEW ──────────────────────────────────────────────────────────
+function renderUpdates(){
+  const aiHtml=aiResult&&pendingUpdate?`<div style="background:var(--blue-bg);border:1px solid #85B7EB;border-radius:10px;padding:1.25rem;margin-bottom:14px">
+    <p style="font-size:13px;font-weight:600;color:var(--blue);margin-bottom:10px">🤖 AI Analysis Result</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+      ${metricCard("Matched Tender",pendingUpdate.matchedGemId||pendingUpdate.matchedTenderId||"No match")}
+      ${metricCard("Confidence",pendingUpdate.confidence||"—")}
+      ${metricCard("Update Type",pendingUpdate.updateType||"Status change")}
+    </div>
+    <p style="font-size:13px;color:#0C447C;margin-bottom:8px">${pendingUpdate.summary||""}</p>
+    ${pendingUpdate.newStatus?`<p style="font-size:12px;color:var(--blue);margin-bottom:8px">→ Status will change to: <strong>${pendingUpdate.newStatus}</strong></p>`:""}
+    ${pendingUpdate.l1Bidder?`<p style="font-size:12px;color:var(--muted);margin-bottom:8px">→ L1 Bidder: <strong>${pendingUpdate.l1Bidder}</strong></p>`:""}
+    ${pendingUpdate.urgentAction?`<p style="font-size:12px;color:var(--red);background:var(--red-bg);padding:6px 10px;border-radius:6px;margin-bottom:10px">⚠ ${pendingUpdate.urgentAction}</p>`:""}
+    <div style="display:flex;gap:8px">
+      <button class="btn-primary" onclick="confirmUpdate()">✓ Confirm & Apply Update</button>
+      <button class="btn-ghost" onclick="discardAI()">Discard</button>
+    </div>
+  </div>`:"";
+  return`<h1 style="font-size:18px;font-weight:700;margin-bottom:16px">AI Tender Updates</h1>
+  ${aiHtml}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="card"><p style="font-size:13px;font-weight:600;margin-bottom:6px">Manual Update</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Type any update — AI will match the GEM tender and extract L1 data.</p>
+      <textarea id="mtext" rows="5" placeholder='e.g. "GEM/2025/B/6154249 — L1 is MITRAS at ₹1,32,158"\n"NTPC BHEL tender — we are L1 at ₹4,59,000"'>${manualText}</textarea>
+      <button onclick="doManual()" ${aiProcessing?"disabled":""} class="btn-primary" style="margin-top:8px">${aiProcessing?"Processing...":"Process with AI →"}</button>
+    </div>
+    <div class="card"><p style="font-size:13px;font-weight:600;margin-bottom:6px">Paste GeM Email</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Paste GeM notification email — AI identifies tender, result, L1 data.</p>
+      <textarea id="etext" rows="5" placeholder="Paste GeM email subject, sender, and body here...">${emailText}</textarea>
+      <button onclick="doEmail()" ${aiProcessing?"disabled":""} class="btn-primary" style="margin-top:8px">${aiProcessing?"Processing...":"Analyze Email →"}</button>
+    </div>
+  </div>`;
+}
+
+// ─── ADD TENDER FORM ──────────────────────────────────────────────────────────
+function renderNewTender(){
+  // ── SMART PASTE MODE ──
+  const previewHtml=parsedPreview?buildPreviewHtml(parsedPreview):"";
+  const pasteMode=`<div class="card">
+    <p style="font-size:13px;font-weight:600;margin-bottom:4px">Smart Paste — AI Auto-Fill</p>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Copy anything from the GeM portal, an email, or your notes. AI extracts all fields automatically.</p>
+    <textarea id="pasteBox" rows="10" placeholder="Paste GeM tender info here. Any format works:\n\nGEM/2026/B/7489812\nBHEL — SS Flexible Hose, Qty 60\nOur bid: ₹3,66,000\nEnd date: 11-05-2026\nResult: L2, L1 was MAESTROFITS @ ₹2,80,000">${pasteText.replace(/</g,'&lt;')}</textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+      <button id="parsebtn" class="btn-primary" onclick="doPasteParse()" style="min-width:160px">${pasteProcessing?"⏳ Parsing with AI...":"🤖 Parse with AI →"}</button>
+      <button class="btn-ghost" onclick="clearPaste()">Clear</button>
+      <span style="font-size:11px;color:var(--muted)">Works with any format, mixed text, partial info</span>
+    </div>
+    ${previewHtml}
+  </div>`;
+
+  // ── MANUAL ENTRY MODE ──
+  const fld=(id,label,type="text",placeholder="")=>`<div>
+    <label class="form-label">${label}</label>
+    <input type="${type}" id="nf_${id}" placeholder="${placeholder}" style="width:100%">
+  </div>`;
+  const statusOpts=STATUSES.map(s=>`<option${s==="Submitted"?" selected":""}>${s}</option>`).join("");
+  const wonOpts=["","WON","Lost","Pending","Cancelled"].map(s=>`<option>${s}</option>`).join("");
+
+  const manualMode=`<div class="card">
+    <p style="font-size:13px;font-weight:600;margin-bottom:14px">Manual Entry Form</p>
+    <div class="form-grid">
+      ${fld("gemId","GEM Tender ID *","text","GEM/2026/B/XXXXXXX")}
+      ${fld("title","Product Description *","text","e.g. SS Flexible Hose")}
+      ${fld("organization","Buyer (Organization)","text","e.g. BHEL, NTPC")}
+      ${fld("department","Department","text")}
+      ${fld("ministry","Ministry","text")}
+      ${fld("tenderType","Tender Type","text","BID or RA")}
+      ${fld("quantity","Quantity","number")}
+      ${fld("submissionDate","Start Date","date")}
+      ${fld("endDate","End Date","date")}
+      ${fld("bidAmount","Our Bid Price (₹)","number")}
+      ${fld("l1Price","L1 Bid Price (₹)","number")}
+      ${fld("l1Bidder","L1 Bidder Name","text")}
+      ${fld("contractNo","Contract No.","text","GEMC-XXXXXX")}
+      ${fld("contractDate","Contract Date","date")}
+      ${fld("orderValue","Order Value (₹)","number")}
+      ${fld("contractStatus","Contract Status","text")}
+      ${fld("consigneeAddress","Consignee Address","text")}
+      ${fld("officeName","Office Name","text")}
+      ${fld("evaluationMethod","Evaluation Method","text")}
+      <div>
+        <label class="form-label">Tender WON/LOST</label>
+        <select id="nf_wonLost" style="width:100%">${wonOpts}</select>
+      </div>
+      <div>
+        <label class="form-label">App Status</label>
+        <select id="nf_status" style="width:100%">${statusOpts}</select>
+      </div>
+      <div class="full">
+        <label class="form-label">Remarks / Notes</label>
+        <textarea id="nf_remarks" rows="3" placeholder="Any additional notes..." style="width:100%;resize:vertical"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;align-items:center">
+      <button class="btn-primary" onclick="doAddTender()" style="min-width:160px">+ Add to Database</button>
+      <button class="btn-ghost" onclick="goView('tenders')">Cancel</button>
+      <span id="add-hint" style="font-size:11px;color:var(--muted)">Fill GEM ID and Product Description to save</span>
+    </div>
+  </div>`;
+
+  const tabBtn=(id,label)=>`<button onclick="setAddMode('${id}')" style="padding:6px 16px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--border);background:${addMode===id?"var(--primary)":"transparent"};color:${addMode===id?"#fff":"var(--muted)"};cursor:pointer">${label}</button>`;
+  return`<button onclick="goView('tenders')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;margin-bottom:14px">← Back</button>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <h1 style="font-size:18px;font-weight:700">Add New Tender</h1>
+    <div style="display:flex;gap:6px">${tabBtn("paste","🤖 Smart Paste")}${tabBtn("manual","✏ Manual Entry")}</div>
+  </div>
+  ${addMode==="paste"?pasteMode:manualMode}`;
+}
+
+function buildPreviewHtml(p){
+  const rows=[["GEM Tender ID",p.gemId],["Product Description",p.title],["Buyer",p.organization],["Department",p.department],["Ministry",p.ministry],["Tender Type",p.tenderType],["Quantity",p.quantity],["Start Date",p.submissionDate],["End Date",p.endDate],["Our Bid Price",p.bidAmount?"₹"+Number(p.bidAmount).toLocaleString("en-IN"):""],["L1 Bid Price",p.l1Price?"₹"+Number(p.l1Price).toLocaleString("en-IN"):""],["L1 Bidder",p.l1Bidder],["Contract No.",p.contractNo],["Contract Date",p.contractDate],["Order Value",p.orderValue?"₹"+Number(p.orderValue).toLocaleString("en-IN"):""],["Contract Status",p.contractStatus],["Consignee",p.consigneeAddress],["Office Name",p.officeName],["WON/LOST",p.wonLost],["Remarks",p.remarks]].filter(([,v])=>v&&String(v).trim()&&v!=="null"&&v!=="0");
+  return`<div style="background:#EAF3DE;border:1px solid #97C459;border-radius:8px;padding:1rem;margin-top:14px">
+    <p style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:10px">✓ AI parsed ${rows.length} fields — review below</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-bottom:12px">
+      ${rows.map(([k,v])=>`<div style="display:flex;gap:6px;padding:4px 0;border-bottom:1px solid #C4DBA4"><span style="font-size:11px;color:var(--muted);flex-shrink:0;min-width:120px">${k}</span><span style="font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${String(v).slice(0,80)}</span></div>`).join("")}
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="confirmParsed()" class="btn-primary">✓ Save to Database</button>
+      <button onclick="clearParsed()" class="btn-ghost">✗ Re-paste</button>
+    </div>
+  </div>`;
+}
+
+// ─── CORE FIXED: doAddTender reads DOM directly — no stale state ──────────────
+function doAddTender(){
+  // Read all values fresh from DOM at click time
+  const form=readNewFormFromDOM();
+
+  // Validation
+  if(!form.gemId.trim()&&!form.title.trim()){
+    showNotif("Please fill in GEM Tender ID or Product Description","err");
+    document.getElementById("nf_gemId")?.focus();
+    return;
+  }
+
+  // Check duplicate GEM ID
+  if(form.gemId.trim()){
+    const dup=tenders.find(t=>t.gemId.trim()===form.gemId.trim());
+    if(dup){
+      showNotif("Duplicate: "+form.gemId+" already in database ("+dup.id+")","err");
+      return;
+    }
+  }
+
+  const now=new Date().toISOString().split("T")[0];
+  const t={
+    id:nextId(),
+    gemId:form.gemId.trim(),
+    refNumber:form.gemId.trim(),
+    title:form.title.trim(),
+    organization:form.organization.trim(),
+    department:form.department.trim(),
+    ministry:form.ministry.trim(),
+    tenderType:(form.tenderType||"BID").trim(),
+    quantity:Number(form.quantity)||0,
+    submissionDate:form.submissionDate,
+    endDate:form.endDate,
+    bidAmount:Number(String(form.bidAmount).replace(/[₹,\s]/g,""))||0,
+    l1Price:Number(String(form.l1Price).replace(/[₹,\s]/g,""))||0,
+    l1Bidder:form.l1Bidder.trim(),
+    contractNo:form.contractNo.trim(),
+    contractDate:form.contractDate,
+    orderValue:Number(String(form.orderValue).replace(/[₹,\s]/g,""))||0,
+    contractStatus:form.contractStatus.trim(),
+    consigneeAddress:form.consigneeAddress.trim(),
+    officeName:form.officeName.trim(),
+    evaluationMethod:form.evaluationMethod.trim(),
+    wonLost:form.wonLost||"Pending",
+    status:form.status||"Submitted",
+    bidStatus:form.status||"Submitted",
+    remarks:form.remarks.trim(),
+    tenderValue:Number(String(form.orderValue).replace(/[₹,\s]/g,""))||0,
+    emdAmount:0,
+    location:form.consigneeAddress.slice(0,60),
+    category:form.ministry,
+    riskLevel:"Low",
+    deadlines:{technical:"",financial:form.endDate||""},
+    contact:"",
+    pendingAction:form.wonLost==="WON"?"Follow up on contract":"Monitor evaluation status",
+    latestUpdate:form.remarks||form.status||"Added manually",
+    aiSummary:form.bidAmount?"Our bid: ₹"+Number(form.bidAmount).toLocaleString("en-IN"):"",
+    documents:[],
+    timeline:[{date:now,event:"Tender added manually",type:"filed"}],
+    _sno:tenders.length+1,
+  };
+
+  tenders=[t,...tenders];
+  saveLocal();
+  showNotif((t.gemId||t.title)+" added to database ✓");
+  // Reset addMode but don't clear to tenders immediately so user sees the success
+  goView("tenders");
+}
+
+// ─── SMART PASTE ──────────────────────────────────────────────────────────────
+async function runPasteParse(){
+  const el=document.getElementById("pasteBox");
+  if(el)pasteText=el.value;
+  if(!pasteText.trim()){showNotif("Paste some tender info first","err");return;}
+  pasteProcessing=true;render();
+  const res=await callAI(`You are a GeM tender data extractor for Vardhman Hydraulic Hoses Pvt Ltd, India.
+Extract all tender fields from the pasted text. Text may be messy or partial — extract whatever is available.
+Return ONLY valid JSON with these exact keys (use null for missing fields):
+{"gemId":"GEM/20XX/X/XXXXXXX","title":"product description","organization":"buyers name","department":"buyers dept","ministry":"ministry name","tenderType":"BID or RA","quantity":number_or_null,"submissionDate":"DD-MM-YYYY","endDate":"DD-MM-YYYY","bidAmount":number_or_null,"l1Price":number_or_null,"l1Bidder":"L1 company name or null","contractNo":"GEMC-XXXX or null","contractDate":"date or null","orderValue":number_or_null,"contractStatus":"In Progress/Completed/Contract Received or null","consigneeAddress":"delivery address or null","officeName":"office name or null","evaluationMethod":"Total value wise or Item wise or null","wonLost":"WON or Lost or Pending or Cancelled","status":"Submitted or Under Review or Technical Bid Opened or Technically Qualified or Technically Rejected or Financial Bid Opened or L1 or L2/L3 or Awarded or Work Order Issued or Closed or Cancelled","remarks":"concise 1-2 line summary of this tender"}
+
+Pasted text:
+${pasteText}`);
+  pasteProcessing=false;
+  if(res&&(res.gemId||res.title)){parsedPreview=res;showNotif("Parsed successfully — review and confirm");}
+  else showNotif("Could not parse — add more detail and retry","err");
+  render();
+}
+
+function confirmParsed(){
+  if(!parsedPreview)return;
+  const p=parsedPreview;
+  if(p.gemId&&tenders.find(t=>t.gemId.trim()===String(p.gemId).trim())){
+    showNotif("Duplicate: "+p.gemId+" already exists in database","err");return;
+  }
+  const now=new Date().toISOString().split("T")[0];
+  const t={
+    id:nextId(),
+    gemId:p.gemId||"",
+    refNumber:p.gemId||"",
+    title:p.title||"",
+    organization:p.organization||"",
+    department:p.department||"",
+    ministry:p.ministry||"",
+    tenderType:p.tenderType||"BID",
+    quantity:Number(p.quantity)||0,
+    submissionDate:p.submissionDate||"",
+    endDate:p.endDate||"",
+    bidAmount:Number(p.bidAmount)||0,
+    l1Price:Number(p.l1Price)||0,
+    l1Bidder:p.l1Bidder||"",
+    contractNo:p.contractNo||"",
+    contractDate:p.contractDate||"",
+    orderValue:Number(p.orderValue)||0,
+    contractStatus:p.contractStatus||"",
+    consigneeAddress:p.consigneeAddress||"",
+    officeName:p.officeName||"",
+    evaluationMethod:p.evaluationMethod||"",
+    wonLost:p.wonLost||"Pending",
+    status:p.status||"Submitted",
+    bidStatus:p.status||"",
+    remarks:p.remarks||pasteText.slice(0,200),
+    tenderValue:Number(p.orderValue)||0,
+    emdAmount:0,
+    location:(p.consigneeAddress||"").slice(0,60),
+    category:p.ministry||"",
+    riskLevel:"Low",
+    deadlines:{technical:"",financial:p.endDate||""},
+    contact:"",
+    pendingAction:p.wonLost==="WON"?"Follow up on contract":"Monitor status",
+    latestUpdate:p.remarks||p.status||"Added via Smart Paste",
+    aiSummary:p.remarks||"",
+    documents:[],
+    timeline:[{date:now,event:"Tender added via Smart Paste",type:"filed"}],
+    _sno:tenders.length+1,
+  };
+  tenders=[t,...tenders];
+  saveLocal();
+  showNotif((p.gemId||p.title||"Tender")+" saved to database ✓");
+  pasteText="";parsedPreview=null;addMode="paste";
+  goView("tenders");
+}
+
+// ─── AI API ───────────────────────────────────────────────────────────────────
+async function callAI(prompt){
+  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+  const d=await r.json();
+  const raw=d.content?.find(b=>b.type==="text")?.text||"{}";
+  try{return JSON.parse(raw.replace(/```json|```/g,"").trim());}catch{return null;}
+}
+
+async function processManual(){
+  if(!manualText.trim()||aiProcessing)return;
+  aiProcessing=true;render();
+  const list=tenders.slice(0,60).map(t=>`${t.gemId}: ${t.title} | Status: ${t.wonLost}`).join("\n");
+  const res=await callAI(`You are a GeM tender tracker for Vardhman Hydraulic Hoses.
+Match this update to the correct tender. Return ONLY valid JSON, no markdown.
+Update: "${manualText}"
+Our Tenders:\n${list}
+Valid statuses: ${STATUSES.join(", ")}
+Return: {"matchedGemId":"GEM/20XX/X/XXXXXXX or null","confidence":"high/medium/low","updateType":"L1 Result/L2 Result/Technical Qualification/Financial Opening/Contract/Other","newStatus":"exact status or null","wonLost":"WON/Lost/Pending/Cancelled or null","l1Price":number_or_null,"l1Bidder":"name or null","contractNo":"number or null","orderValue":number_or_null,"summary":"one line summary","urgentAction":"action needed or null","remarks":"remark text"}`);
+  aiProcessing=false;
+  if(res){const match=tenders.find(t=>t.gemId===res.matchedGemId);if(match)res.matchedTenderId=match.id;aiResult=res;pendingUpdate={...res};}
+  else showNotif("AI processing failed","err");
+  render();
+}
+
+async function processEmail(){
+  if(!emailText.trim()||aiProcessing)return;
+  aiProcessing=true;render();
+  const list=tenders.slice(0,60).map(t=>`${t.gemId}: ${t.title} | ${t.department}`).join("\n");
+  const res=await callAI(`You are a GeM tender tracker for Vardhman Hydraulic Hoses.
+Analyze this GeM email. Return ONLY valid JSON, no markdown.
+Email:\n${emailText}
+Our Tenders:\n${list}
+Return: {"matchedGemId":"GEM/20XX/X/XXXXXXX or null","confidence":"high/medium/low","updateType":"Corrigendum/Technical Opening/Financial Opening/L1 Notification/LOA/Contract Generated/Rejection/Other","newStatus":"exact status or null","wonLost":"WON/Lost/Pending/Cancelled or null","l1Price":number_or_null,"l1Bidder":"name or null","contractNo":"number or null","orderValue":number_or_null,"summary":"one line summary","urgentAction":"action needed or null","remarks":"remark text"}`);
+  aiProcessing=false;
+  if(res){const match=tenders.find(t=>t.gemId===res.matchedGemId);if(match)res.matchedTenderId=match.id;aiResult=res;pendingUpdate={...res};}
+  else showNotif("Email analysis failed","err");
+  render();
+}
+
+function confirmUpdate(){
+  if(!pendingUpdate?.matchedTenderId&&!pendingUpdate?.matchedGemId){showNotif("No tender matched — cannot apply","err");return;}
+  const now=new Date().toISOString().split("T")[0];
+  tenders=tenders.map(t=>{
+    const match=t.id===pendingUpdate.matchedTenderId||t.gemId===pendingUpdate.matchedGemId;
+    if(!match)return t;
+    const u={...t};
+    if(pendingUpdate.newStatus)u.status=pendingUpdate.newStatus;
+    if(pendingUpdate.wonLost)u.wonLost=pendingUpdate.wonLost;
+    if(pendingUpdate.l1Price)u.l1Price=pendingUpdate.l1Price;
+    if(pendingUpdate.l1Bidder)u.l1Bidder=pendingUpdate.l1Bidder;
+    if(pendingUpdate.contractNo)u.contractNo=pendingUpdate.contractNo;
+    if(pendingUpdate.contractDate)u.contractDate=pendingUpdate.contractDate;
+    if(pendingUpdate.orderValue)u.orderValue=pendingUpdate.orderValue;
+    if(pendingUpdate.contractStatus)u.contractStatus=pendingUpdate.contractStatus;
+    if(pendingUpdate.remarks)u.remarks=(u.remarks||"")+" | "+pendingUpdate.remarks;
+    if(pendingUpdate.summary)u.latestUpdate=pendingUpdate.summary;
+    u.timeline=[...(t.timeline||[]),{date:now,event:pendingUpdate.summary||"Status updated",type:"update"}];
+    return u;
+  });
+  saveLocal();showNotif("Tender updated successfully");
+  aiResult=null;pendingUpdate=null;manualText="";emailText="";render();
+}
+
+// ─── CRUD ─────────────────────────────────────────────────────────────────────
+function deleteTender(id){
+  if(!confirm("Delete this tender from the tracker?"))return;
+  tenders=tenders.filter(t=>t.id!==id);saveLocal();showNotif("Tender removed");goView("tenders");
+}
+function updateTenderStatus(id,status){
+  const now=new Date().toISOString().split("T")[0];
+  tenders=tenders.map(t=>t.id!==id?t:{...t,status,timeline:[...(t.timeline||[]),{date:now,event:"Status → "+status,type:"update"}]});
+  saveLocal();render();
+}
+
+// ─── EXCEL EXPORT ─────────────────────────────────────────────────────────────
+function exportExcel(){
+  try{
+    const wb=XLSX.utils.book_new();
+    const headers=["S.No.","Tender ID","Tender Type","Buyers Name","Buyers Department","Ministry","Product Description","Quantity","Tender WON/LOST","Bid Status","Start Date","End Date","Remarks","Our Bid Price (₹)","L1 Bid Price (₹)","L1 Bidder Name","Consignee Address","Contract No.","Contract Date","Order Value (₹)","Contract Status","Office Name","Evaluation Method"];
+    const rows=tenders.map((t,i)=>[i+1,t.gemId||"",t.tenderType||"BID",t.organization||"",t.department||"",t.ministry||"",t.title||"",t.quantity||"",t.wonLost||"",t.bidStatus||t.status||"",t.submissionDate||"",t.endDate||"",t.remarks||"",t.bidAmount||"",t.l1Price||"",t.l1Bidder||"",t.consigneeAddress||"",t.contractNo||"",t.contractDate||"",t.orderValue||"",t.contractStatus||"",t.officeName||"",t.evaluationMethod||""]);
+    const ws=XLSX.utils.aoa_to_sheet([headers,...rows]);
+    ws["!cols"]=[5,30,8,30,25,35,50,8,8,25,12,12,80,15,15,40,50,25,12,15,20,20,20].map(w=>({wch:w}));
+    XLSX.utils.book_append_sheet(wb,ws,"Tender Database");
+    const won=tenders.filter(t=>t.wonLost==="WON");
+    if(won.length){
+      const wh=["S.No.","Tender ID","Buyer","Product","Qty","Our Bid (₹)","Contract No.","Contract Date","Order Value (₹)","Status"];
+      const wr=won.map((t,i)=>[i+1,t.gemId,t.organization,t.title,t.quantity,t.bidAmount,t.contractNo,t.contractDate,t.orderValue,t.contractStatus]);
+      XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([wh,...wr]),"Won Orders");
+    }
+    XLSX.writeFile(wb,"Vardhman_Tender_File_"+new Date().toISOString().split("T")[0]+".xlsx");
+    showNotif("Excel exported successfully");
+  }catch(e){showNotif("Export failed: "+e.message,"err");}
+}
+
+// ─── EXCEL IMPORT ─────────────────────────────────────────────────────────────
+function importExcel(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:"binary"});
+      const ws=wb.Sheets["Tender Database"];
+      if(!ws){showNotif("Sheet 'Tender Database' not found","err");return;}
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      const headers=rows[0];
+      const col=(name)=>headers.indexOf(name);
+      let added=0,updated=0;
+      rows.slice(1).forEach((row,i)=>{
+        const gemId=String(row[col("Tender ID")]||"").trim();
+        if(!gemId)return;
+        const d={gemId,refNumber:gemId,tenderType:String(row[col("Tender Type")]||"BID").trim(),organization:String(row[col("Buyers Name")]||"").trim(),department:String(row[col("Buyers Department")]||"").trim(),ministry:String(row[col("Ministry")]||"").trim(),title:String(row[col("Product Description")]||"").trim(),quantity:Number(row[col("Quantity")])||0,wonLost:String(row[col("Tender WON/LOST")]||"").trim(),bidStatus:String(row[col("Bid Status")]||"").trim(),submissionDate:String(row[col("Start Date")]||"").trim(),endDate:String(row[col("End Date")]||"").trim(),remarks:String(row[col("Remarks")]||"").trim(),bidAmount:Number(String(row[col("Our Bid Price (₹)")]||"").replace(/[₹,\s]/g,""))||0,l1Price:Number(String(row[col("L1 Bid Price (₹)")]||"").replace(/[₹,\s]/g,""))||0,l1Bidder:String(row[col("L1 Bidder Name")]||"").trim(),consigneeAddress:String(row[col("Consignee Address")]||"").trim(),contractNo:String(row[col("Contract No.")]||"").trim(),contractDate:String(row[col("Contract Date")]||"").trim(),orderValue:Number(String(row[col("Order Value (₹)")]||"").replace(/[₹,\s]/g,""))||0,contractStatus:String(row[col("Contract Status")]||"").trim(),officeName:String(row[col("Office Name")]||"").trim(),evaluationMethod:String(row[col("Evaluation Method")]||"").trim()};
+        const ex=tenders.find(t=>t.gemId===gemId);
+        if(ex){Object.assign(ex,d);updated++;}
+        else{tenders.push({...d,id:"GEM-"+String(tenders.length+1).padStart(3,"0"),status:"Submitted",tenderValue:d.orderValue,emdAmount:0,location:d.consigneeAddress.slice(0,60),category:d.ministry,riskLevel:"Low",deadlines:{technical:"",financial:d.endDate},contact:"",pendingAction:"",latestUpdate:d.bidStatus,documents:[],aiSummary:"",timeline:[{date:new Date().toISOString().split("T")[0],event:"Imported from Excel",type:"filed"}],_sno:i+1});added++;}
+      });
+      saveLocal();showNotif("Import complete: "+added+" new, "+updated+" updated");render();
+    }catch(e){showNotif("Import failed: "+e.message,"err");}
+  };
+  reader.readAsBinaryString(file);input.value="";
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function renderContent(){
+  if(view==="dashboard")return renderDashboard();
+  if(view==="tenders")return renderTenderList();
+  if(view==="detail")return renderDetail();
+  if(view==="updates")return renderUpdates();
+  if(view==="new")return renderNewTender();
+  return"";
+}
+
+function render(){
+  const won=tenders.filter(t=>t.wonLost==="WON").length;
+  const winRate=tenders.length?Math.round((won/tenders.length)*100):0;
+  const navItems=[{id:"dashboard",label:"📊 Dashboard"},{id:"tenders",label:"📋 All Tenders"},{id:"updates",label:"🤖 AI Updates"},{id:"new",label:"＋ Add Tender"}];
+  const navHtml=navItems.map(n=>`<button onclick="goView('${n.id}')" style="display:flex;align-items:center;width:100%;padding:8px 12px;border-radius:7px;border:none;background:${view===n.id?"#E8E6E0":"transparent"};color:${view===n.id?"var(--primary)":"var(--muted)"};cursor:pointer;font-size:13px;font-weight:${view===n.id?600:400};text-align:left;margin-bottom:2px">${n.label}</button>`).join("");
+  document.getElementById("app").innerHTML=`
+    <div style="width:196px;background:#EDEBE5;border-right:1px solid var(--border);padding:1.25rem 0;flex-shrink:0;display:flex;flex-direction:column;min-height:100vh">
+      <div style="padding:0 1.25rem 1rem;border-bottom:1px solid var(--border);margin-bottom:8px">
+        <p style="font-size:15px;font-weight:700;margin:0">TenderIQ</p>
+        <p style="font-size:10px;color:var(--muted);margin:2px 0 0">Vardhman Hydraulic Hoses</p>
+      </div>
+      <nav style="flex:1;padding:0 0.5rem">${navHtml}</nav>
+      <div style="padding:1rem 1.25rem;border-top:1px solid var(--border)">
+        <p style="font-size:11px;color:var(--muted);margin:0">${tenders.length} tenders · Win rate: ${winRate}%</p>
+        <button onclick="resetToDefault()" style="margin-top:8px;width:100%;padding:5px;border:1px solid var(--border);background:transparent;border-radius:5px;font-size:10px;color:var(--muted);cursor:pointer">↺ Reset to default data</button>
+      </div>
+    </div>
+    <div style="flex:1;padding:1.5rem 2rem;overflow-y:auto;max-height:100vh;min-width:0">
+      <div id="content">${renderContent()}</div>
+    </div>`;
+}
+
+// ─── GLOBAL HANDLERS ──────────────────────────────────────────────────────────
+window.goView=(v)=>{view=v;if(v!=="detail")selectedId=null;aiResult=null;pendingUpdate=null;if(v==="new"){pasteText="";parsedPreview=null;addMode="paste";}render();};
+window.setAddMode=(m)=>{addMode=m;render();};
+window.selectTender=(id)=>{selectedId=id;view="detail";render();};
+window.setTab=(t)=>{filterTab=t;render();};
+window.setSearch=(v)=>{searchQ=v;render();};
+window.setFilterStatus=(v)=>{filterStatus=v;render();};
+window.doAddTender=()=>doAddTender();
+window.deleteTender=(id)=>deleteTender(id);
+window.updateTenderStatus=(id,s)=>updateTenderStatus(id,s);
+window.doManual=()=>{const el=document.getElementById("mtext");if(el)manualText=el.value;processManual();};
+window.doEmail=()=>{const el=document.getElementById("etext");if(el)emailText=el.value;processEmail();};
+window.confirmUpdate=()=>confirmUpdate();
+window.discardAI=()=>{aiResult=null;pendingUpdate=null;render();};
+window.doPasteParse=()=>{const el=document.getElementById("pasteBox");if(el)pasteText=el.value;runPasteParse();};
+window.confirmParsed=()=>confirmParsed();
+window.clearPaste=()=>{pasteText="";parsedPreview=null;render();};
+window.clearParsed=()=>{parsedPreview=null;render();};
+window.exportExcel=()=>exportExcel();
+window.importExcel=(input)=>importExcel(input);
+window.resetToDefault=()=>{if(!confirm("Reset to default data? All local changes lost."))return;localStorage.removeItem("tiq_v4");tenders=JSON.parse(JSON.stringify(EXCEL_DATA));showNotif("Reset to default");render();};
+
+initData();
+render();
+</script>
+</body>
+</html>
