@@ -442,6 +442,47 @@ function getMinistriesList() {
   return json(rows.map((r) => r.ministry));
 }
 
+// POST /api/tenders/bulk — insert multiple rows in one transaction
+function bulkCreateTenders(body: unknown) {
+  if (!Array.isArray(body) || body.length === 0) {
+    return json({ inserted: 0, skipped: 0, errors: [] });
+  }
+
+  const results = { inserted: 0, skipped: 0, errors: [] as string[] };
+
+  const runBatch = db.transaction((records: Record<string, unknown>[]) => {
+    for (const tender of records) {
+      const tid = String(tender.tender_id ?? "").trim();
+      if (!tid) { results.skipped++; continue; }
+
+      // Skip duplicates gracefully
+      const exists = db.query("SELECT 1 FROM tenders WHERE tender_id = $tid").get({ $tid: tid });
+      if (exists) { results.skipped++; continue; }
+
+      try {
+        const cols = Object.keys(tender).filter(
+          (k) => tender[k] !== null && tender[k] !== undefined && tender[k] !== ""
+        );
+        if (cols.length === 0) { results.skipped++; continue; }
+
+        const placeholders = cols.map((c) => `$${c}`).join(", ");
+        const colNames = cols.join(", ");
+        const params: Record<string, unknown> = {};
+        for (const c of cols) params[`$${c}`] = tender[c];
+
+        db.query(`INSERT INTO tenders (${colNames}) VALUES (${placeholders})`).run(params);
+        results.inserted++;
+      } catch (e: any) {
+        results.errors.push(`${tid}: ${e.message}`);
+        results.skipped++;
+      }
+    }
+  });
+
+  runBatch(body as Record<string, unknown>[]);
+  return json(results, 201);
+}
+
 // ──────────────────────────────────────────────
 // Server
 // ──────────────────────────────────────────────
@@ -457,6 +498,7 @@ const server = Bun.serve({
       // Tenders
       if (path === "/api/tenders" && req.method === "GET") return getTenders(url);
       if (path === "/api/tenders" && req.method === "POST") return createTender(await req.json());
+      if (path === "/api/tenders/bulk" && req.method === "POST") return bulkCreateTenders(await req.json());
       if (/^\/api\/tenders\/\d+$/.test(path)) {
         const id = path.split("/")[3];
         if (req.method === "GET")    return getTender(id);

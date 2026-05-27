@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback, type ReactNode } from "react";
-import { Search, Plus, X, ChevronLeft, ChevronRight, Edit2, Trash2, Eye, Download, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, Plus, X, ChevronLeft, ChevronRight, Edit2, Trash2, Eye, Download, ArrowUpDown, ArrowUp, ArrowDown, Upload } from "lucide-react";
 import { api } from "../api";
 import type { Tender, TenderStatus } from "../types";
+import { ImportModal } from "../components/ImportModal";
 
 // ── Helpers ──────────────────────────────────────────────────────────
 function fmtRs(n: number | null) {
@@ -460,6 +461,9 @@ export default function Tenders() {
   const [deleteId,        setDeleteId]        = useState<number | null>(null);
   const [sortKey,         setSortKey]         = useState<SortKey>("tender_id");
   const [sortDir,         setSortDir]         = useState<SortDir>("desc");
+  const [statusEditId,    setStatusEditId]    = useState<number | null>(null);
+  const [statusSaving,    setStatusSaving]    = useState<number | null>(null);
+  const [showImport,      setShowImport]      = useState(false);
 
   const LIMIT = 20;
 
@@ -498,6 +502,20 @@ export default function Tenders() {
     load();
   }
 
+  async function handleInlineStatus(id: number, newStatus: TenderStatus) {
+    setStatusEditId(null);
+    setStatusSaving(id);
+    // Optimistic update — reflect immediately, revert on error
+    setTenders((prev) => prev.map((t) => t.id === id ? { ...t, status: newStatus } : t));
+    try {
+      await api.updateTender(id, { status: newStatus });
+    } catch {
+      load(); // revert on failure
+    } finally {
+      setStatusSaving(null);
+    }
+  }
+
   function handleSort(col: SortKey) {
     if (col === sortKey) setSortDir((d) => d === "asc" ? "desc" : "asc");
     else { setSortKey(col); setSortDir("asc"); }
@@ -522,6 +540,13 @@ export default function Tenders() {
             title="Export current view as CSV"
           >
             <Download className="w-3.5 h-3.5" /> Export CSV
+          </button>
+          <button
+            onClick={() => setShowImport(true)}
+            className="btn-secondary flex items-center gap-1.5 text-xs"
+            title="Bulk import from CSV"
+          >
+            <Upload className="w-3.5 h-3.5" /> Import CSV
           </button>
           <button onClick={() => setModal({ mode: "add", tender: null })} className="btn-primary">
             <Plus className="w-4 h-4" /> Add Tender
@@ -598,7 +623,29 @@ export default function Tenders() {
                   <td className="px-4 py-3 text-xs text-slate-600 w-48 truncate max-w-[180px]">
                     {t.product_desc?.substring(0, 45) || "—"}
                   </td>
-                  <td className="px-4 py-3"><StatusBadge v={t.status} /></td>
+                  <td className="px-4 py-3">
+                    {statusEditId === t.id ? (
+                      <select
+                        autoFocus
+                        className="text-[10px] font-semibold border border-indigo-300 rounded-full px-2 py-0.5 bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-indigo-400 cursor-pointer"
+                        value={t.status ?? "Submitted"}
+                        onChange={(e) => handleInlineStatus(t.id, e.target.value as TenderStatus)}
+                        onBlur={() => setStatusEditId(null)}
+                      >
+                        {STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
+                      </select>
+                    ) : statusSaving === t.id ? (
+                      <span className="text-[10px] text-slate-400 italic animate-pulse px-2">saving…</span>
+                    ) : (
+                      <button
+                        onClick={() => setStatusEditId(t.id)}
+                        title="Click to change status"
+                        className="rounded-full hover:ring-2 hover:ring-offset-1 hover:ring-indigo-300 transition-all cursor-pointer"
+                      >
+                        <StatusBadge v={t.status} />
+                      </button>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-xs text-right text-slate-700 font-medium">{fmtRs(t.our_bid_price)}</td>
                   <td className="px-4 py-3 text-xs text-right text-emerald-700 font-medium">{fmtRs(t.l1_bid_price)}</td>
                   <td className={`px-4 py-3 text-xs text-right ${bidGapColor(t.our_bid_price, t.l1_bid_price)}`}>
@@ -685,6 +732,14 @@ export default function Tenders() {
           tender={modal.tender}
           onClose={() => setModal(null)}
           onSaved={load}
+        />
+      )}
+
+      {/* Import Modal */}
+      {showImport && (
+        <ImportModal
+          onClose={() => setShowImport(false)}
+          onImported={load}
         />
       )}
 

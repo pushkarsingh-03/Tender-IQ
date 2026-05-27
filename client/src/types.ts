@@ -160,6 +160,12 @@ export interface SyncResult {
   error?: string;
 }
 
+export interface BulkImportResult {
+  inserted: number;
+  skipped: number;
+  errors: string[];
+}
+
 export interface TendersResponse {
   tenders: Tender[];
   total: number;

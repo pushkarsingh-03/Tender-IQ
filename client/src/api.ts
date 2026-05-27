@@ -1,7 +1,7 @@
 import type {
   OverviewStats, YearlyStats, BuyerStats, CompetitorStats,
   L1GapStats, FunnelStats, MonthlyStats, SyncLog, SyncResult,
-  Tender, TendersResponse,
+  Tender, TendersResponse, BulkImportResult,
   MinistryStats, WinTrendStats, ProductStats, TenderTypeStats,
 } from "./types";
 
@@ -28,6 +28,8 @@ export const api = {
     fetchApi<Tender>(`/tenders/${id}`, { method: "PUT", body: JSON.stringify(data) }),
   deleteTender: (id: number) =>
     fetchApi<{ ok: boolean }>(`/tenders/${id}`, { method: "DELETE" }),
+  bulkImportTenders: (data: Partial<Tender>[]) =>
+    fetchApi<BulkImportResult>("/tenders/bulk", { method: "POST", body: JSON.stringify(data) }),
 
   // Analytics — core
   getOverview:     () => fetchApi<OverviewStats>("/analytics/overview"),
