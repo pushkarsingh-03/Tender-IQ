@@ -4,6 +4,15 @@ import { join } from "path";
 const DB_PATH = join(import.meta.dir, "tenderiq.db");
 export const db = new Database(DB_PATH, { create: true });
 
+// Idempotent column addition — no-op if column already exists
+function addCol(table: string, col: string, def: string) {
+  try {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`);
+  } catch {
+    // column already exists — ignore
+  }
+}
+
 export function initDb() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS tenders (
@@ -60,5 +69,25 @@ export function initDb() {
     BEGIN
       UPDATE tenders SET updated_at = datetime('now') WHERE id = NEW.id;
     END;
+  `);
+
+  // ── New columns (idempotent — safe to re-run on every boot) ──────────
+  addCol("tenders", "consignee_name",          "TEXT");
+  addCol("tenders", "buyer_same_as_consignee", "INTEGER DEFAULT 0");
+  addCol("tenders", "status",                  "TEXT DEFAULT 'Submitted'");
+  addCol("tenders", "l2_bid_price",            "REAL");
+  addCol("tenders", "l2_bidder_name",          "TEXT");
+  addCol("tenders", "is_scheduled",            "INTEGER DEFAULT 0");
+  addCol("tenders", "scheduled_product_desc",  "TEXT");
+  addCol("tenders", "scheduled_our_bid",       "REAL");
+  addCol("tenders", "scheduled_l1_bid",        "REAL");
+  addCol("tenders", "scheduled_l1_bidder",     "TEXT");
+  addCol("tenders", "schedule_count",          "INTEGER DEFAULT 1");
+
+  // ── Migrate won_lost → status (idempotent: only touches rows still at default 'Submitted') ──
+  db.exec(`
+    UPDATE tenders SET status = 'Won'       WHERE won_lost = 'WON'       AND (status IS NULL OR status = 'Submitted');
+    UPDATE tenders SET status = 'Lost'      WHERE won_lost = 'Lost'      AND (status IS NULL OR status = 'Submitted');
+    UPDATE tenders SET status = 'Cancelled' WHERE won_lost = 'Cancelled' AND (status IS NULL OR status = 'Submitted');
   `);
 }

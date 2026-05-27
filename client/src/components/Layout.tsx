@@ -1,12 +1,13 @@
 import { NavLink, Outlet } from "react-router-dom";
 import {
-  LayoutDashboard, FileText, RefreshCw, TrendingUp,
+  LayoutDashboard, FileText, RefreshCw, TrendingUp, BarChart2,
 } from "lucide-react";
 
 const NAV = [
-  { to: "/",       label: "Dashboard",  icon: LayoutDashboard },
-  { to: "/tenders",label: "Tenders",    icon: FileText        },
-  { to: "/sync",   label: "Sync",       icon: RefreshCw       },
+  { to: "/",          label: "Dashboard",  icon: LayoutDashboard },
+  { to: "/tenders",   label: "Tenders",    icon: FileText        },
+  { to: "/analytics", label: "Analytics",  icon: BarChart2       },
+  { to: "/sync",      label: "Sync",       icon: RefreshCw       },
 ];
 
 export default function Layout() {

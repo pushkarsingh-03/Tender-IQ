@@ -62,11 +62,11 @@ function isSafeSQL(sql: string): { safe: boolean; reason?: string } {
 // GET /api/tenders
 function getTenders(url: URL) {
   const search = url.searchParams.get("search") || "";
-  const won_lost = url.searchParams.get("won_lost") || "";
-  const year = url.searchParams.get("year") || "";
-  const type = url.searchParams.get("type") || "";
-  const page = parseInt(url.searchParams.get("page") || "1");
-  const limit = parseInt(url.searchParams.get("limit") || "20");
+  const status = url.searchParams.get("status") || "";
+  const year   = url.searchParams.get("year")   || "";
+  const type   = url.searchParams.get("type")   || "";
+  const page   = parseInt(url.searchParams.get("page")  || "1");
+  const limit  = parseInt(url.searchParams.get("limit") || "20");
   const offset = (page - 1) * limit;
 
   let where = "WHERE 1=1";
@@ -76,9 +76,9 @@ function getTenders(url: URL) {
     where += ` AND (tender_id LIKE $search OR buyer_name LIKE $search OR product_desc LIKE $search)`;
     params.$search = `%${search}%`;
   }
-  if (won_lost) {
-    where += ` AND won_lost = $won_lost`;
-    params.$won_lost = won_lost;
+  if (status) {
+    where += ` AND status = $status`;
+    params.$status = status;
   }
   if (year) {
     where += ` AND tender_id LIKE $year`;
@@ -156,22 +156,26 @@ function deleteTender(id: string) {
 
 // ──────────────────────────────────────────────
 // Analytics
+// Active  = Submitted | Technical Evaluation | Financial Evaluation
+// Won     = Won
+// Lost    = Lost
+// Cancelled = Cancelled | Disqualified
 // ──────────────────────────────────────────────
 function analyticsOverview() {
   const row = db.query(`
     SELECT
       COUNT(*) as total,
-      SUM(CASE WHEN won_lost = 'WON' THEN 1 ELSE 0 END) as won,
-      SUM(CASE WHEN won_lost = 'Lost' THEN 1 ELSE 0 END) as lost,
-      SUM(CASE WHEN won_lost = 'Pending' THEN 1 ELSE 0 END) as pending,
-      SUM(CASE WHEN won_lost = 'Cancelled' THEN 1 ELSE 0 END) as cancelled,
+      SUM(CASE WHEN status = 'Won'  THEN 1 ELSE 0 END) as won,
+      SUM(CASE WHEN status = 'Lost' THEN 1 ELSE 0 END) as lost,
+      SUM(CASE WHEN status IN ('Submitted','Technical Evaluation','Financial Evaluation') THEN 1 ELSE 0 END) as active,
+      SUM(CASE WHEN status IN ('Cancelled','Disqualified') THEN 1 ELSE 0 END) as cancelled,
       ROUND(
-        CAST(SUM(CASE WHEN won_lost = 'WON' THEN 1 ELSE 0 END) AS REAL) /
-        NULLIF(SUM(CASE WHEN won_lost IN ('WON','Lost') THEN 1 ELSE 0 END), 0) * 100,
+        CAST(SUM(CASE WHEN status = 'Won'  THEN 1 ELSE 0 END) AS REAL) /
+        NULLIF(SUM(CASE WHEN status IN ('Won','Lost') THEN 1 ELSE 0 END), 0) * 100,
         1
       ) as win_rate,
-      COALESCE(SUM(CASE WHEN won_lost = 'WON' THEN order_value ELSE 0 END), 0) as total_order_value,
-      COALESCE(SUM(CASE WHEN won_lost IN ('WON','Lost','Pending') THEN our_bid_price ELSE 0 END), 0) as total_bid_value
+      COALESCE(SUM(CASE WHEN status = 'Won' THEN order_value ELSE 0 END), 0) as total_order_value,
+      COALESCE(SUM(CASE WHEN status IN ('Won','Lost','Submitted','Technical Evaluation','Financial Evaluation') THEN our_bid_price ELSE 0 END), 0) as total_bid_value
     FROM tenders
   `).get();
   return json(row);
@@ -181,13 +185,13 @@ function analyticsYearly() {
   const rows = db.query(`
     SELECT
       substr(tender_id, 5, 4) as year,
-      SUM(CASE WHEN won_lost = 'WON'     THEN 1 ELSE 0 END) as won,
-      SUM(CASE WHEN won_lost = 'Lost'    THEN 1 ELSE 0 END) as lost,
-      SUM(CASE WHEN won_lost = 'Pending' THEN 1 ELSE 0 END) as pending,
+      SUM(CASE WHEN status = 'Won'  THEN 1 ELSE 0 END) as won,
+      SUM(CASE WHEN status = 'Lost' THEN 1 ELSE 0 END) as lost,
+      SUM(CASE WHEN status IN ('Submitted','Technical Evaluation','Financial Evaluation') THEN 1 ELSE 0 END) as active,
       COUNT(*) as total,
       ROUND(
-        CAST(SUM(CASE WHEN won_lost = 'WON' THEN 1 ELSE 0 END) AS REAL) /
-        NULLIF(SUM(CASE WHEN won_lost IN ('WON','Lost') THEN 1 ELSE 0 END), 0) * 100, 1
+        CAST(SUM(CASE WHEN status = 'Won' THEN 1 ELSE 0 END) AS REAL) /
+        NULLIF(SUM(CASE WHEN status IN ('Won','Lost') THEN 1 ELSE 0 END), 0) * 100, 1
       ) as win_rate
     FROM tenders
     WHERE tender_id LIKE 'GEM/%'
@@ -202,8 +206,13 @@ function analyticsBuyers() {
     SELECT
       buyer_name,
       COUNT(*) as total_tenders,
-      SUM(CASE WHEN won_lost = 'WON' THEN 1 ELSE 0 END) as won,
-      COALESCE(SUM(CASE WHEN won_lost = 'WON' THEN order_value ELSE 0 END), 0) as total_value
+      SUM(CASE WHEN status = 'Won'  THEN 1 ELSE 0 END) as won,
+      SUM(CASE WHEN status = 'Lost' THEN 1 ELSE 0 END) as lost,
+      ROUND(
+        CAST(SUM(CASE WHEN status = 'Won' THEN 1 ELSE 0 END) AS REAL) /
+        NULLIF(SUM(CASE WHEN status IN ('Won','Lost') THEN 1 ELSE 0 END), 0) * 100, 1
+      ) as win_rate,
+      COALESCE(SUM(CASE WHEN status = 'Won' THEN order_value ELSE 0 END), 0) as total_value
     FROM tenders
     WHERE buyer_name IS NOT NULL
     GROUP BY buyer_name
@@ -221,7 +230,7 @@ function analyticsCompetitors() {
       ROUND(AVG(l1_bid_price), 0) as avg_l1_price,
       ROUND(AVG(our_bid_price), 0) as avg_our_price
     FROM tenders
-    WHERE l1_bidder_name IS NOT NULL AND l1_bidder_name != '' AND won_lost = 'Lost'
+    WHERE l1_bidder_name IS NOT NULL AND l1_bidder_name != '' AND status = 'Lost'
     GROUP BY l1_bidder_name
     ORDER BY times_beat_us DESC
     LIMIT 10
@@ -242,7 +251,7 @@ function analyticsL1Gap() {
     FROM tenders
     WHERE our_bid_price IS NOT NULL AND l1_bid_price IS NOT NULL
       AND our_bid_price > 0 AND l1_bid_price > 0
-      AND won_lost = 'Lost'
+      AND status = 'Lost'
     ORDER BY gap_pct ASC
     LIMIT 30
   `).all();
@@ -252,10 +261,10 @@ function analyticsL1Gap() {
 function analyticsPipeline() {
   const rows = db.query(`
     SELECT
-      tender_id, buyer_name, product_desc, end_date, bid_status,
+      tender_id, buyer_name, product_desc, end_date, status,
       our_bid_price, quantity, tender_type
     FROM tenders
-    WHERE won_lost = 'Pending'
+    WHERE status IN ('Submitted','Technical Evaluation','Financial Evaluation')
     ORDER BY end_date ASC
     LIMIT 25
   `).all();
@@ -265,11 +274,11 @@ function analyticsPipeline() {
 function analyticsFunnel() {
   const rows = db.query(`
     SELECT
-      REPLACE(REPLACE(REPLACE(bid_status, '💰 ',''), '✅ ',''), '🔚 ','') as bid_status,
+      status,
       COUNT(*) as count
     FROM tenders
-    WHERE bid_status IS NOT NULL
-    GROUP BY REPLACE(REPLACE(REPLACE(bid_status, '💰 ',''), '✅ ',''), '🔚 ','')
+    WHERE status IS NOT NULL
+    GROUP BY status
     ORDER BY count DESC
   `).all();
   return json(rows);
@@ -282,9 +291,92 @@ function analyticsMonthly() {
       SUM(order_value) as total_value,
       COUNT(*) as contracts
     FROM tenders
-    WHERE contract_date IS NOT NULL AND won_lost = 'WON' AND order_value IS NOT NULL
+    WHERE contract_date IS NOT NULL AND status = 'Won' AND order_value IS NOT NULL
     GROUP BY substr(contract_date, 1, 7)
     ORDER BY month ASC
+  `).all();
+  return json(rows);
+}
+
+function analyticsMinistry() {
+  const rows = db.query(`
+    SELECT
+      ministry,
+      COUNT(*) as total,
+      SUM(CASE WHEN status = 'Won'  THEN 1 ELSE 0 END) as won,
+      SUM(CASE WHEN status = 'Lost' THEN 1 ELSE 0 END) as lost,
+      ROUND(
+        CAST(SUM(CASE WHEN status = 'Won' THEN 1 ELSE 0 END) AS REAL) /
+        NULLIF(SUM(CASE WHEN status IN ('Won','Lost') THEN 1 ELSE 0 END), 0) * 100, 1
+      ) as win_rate,
+      COALESCE(SUM(CASE WHEN status = 'Won' THEN order_value ELSE 0 END), 0) as total_value
+    FROM tenders
+    WHERE ministry IS NOT NULL AND ministry != ''
+    GROUP BY ministry
+    ORDER BY total DESC
+    LIMIT 12
+  `).all();
+  return json(rows);
+}
+
+function analyticsWinTrend() {
+  const rows = db.query(`
+    SELECT
+      substr(start_date, 1, 7) as month,
+      COUNT(*) as total,
+      SUM(CASE WHEN status = 'Won'  THEN 1 ELSE 0 END) as won,
+      SUM(CASE WHEN status = 'Lost' THEN 1 ELSE 0 END) as lost,
+      ROUND(
+        CAST(SUM(CASE WHEN status = 'Won' THEN 1 ELSE 0 END) AS REAL) /
+        NULLIF(SUM(CASE WHEN status IN ('Won','Lost') THEN 1 ELSE 0 END), 0) * 100, 1
+      ) as win_rate
+    FROM tenders
+    WHERE start_date IS NOT NULL AND start_date != ''
+      AND status IN ('Won','Lost')
+    GROUP BY substr(start_date, 1, 7)
+    ORDER BY month ASC
+  `).all();
+  return json(rows);
+}
+
+function analyticsProducts() {
+  const rows = db.query(`
+    SELECT
+      substr(product_desc, 1, 60) as product,
+      COUNT(*) as total,
+      SUM(CASE WHEN status = 'Won'  THEN 1 ELSE 0 END) as won,
+      SUM(CASE WHEN status = 'Lost' THEN 1 ELSE 0 END) as lost,
+      ROUND(
+        CAST(SUM(CASE WHEN status = 'Won' THEN 1 ELSE 0 END) AS REAL) /
+        NULLIF(SUM(CASE WHEN status IN ('Won','Lost') THEN 1 ELSE 0 END), 0) * 100, 1
+      ) as win_rate,
+      COALESCE(ROUND(AVG(our_bid_price), 0), 0) as avg_our_bid,
+      COALESCE(ROUND(AVG(l1_bid_price), 0), 0)  as avg_l1_bid
+    FROM tenders
+    WHERE product_desc IS NOT NULL
+    GROUP BY substr(product_desc, 1, 60)
+    HAVING COUNT(*) >= 2
+    ORDER BY total DESC
+    LIMIT 15
+  `).all();
+  return json(rows);
+}
+
+function analyticsTenderType() {
+  const rows = db.query(`
+    SELECT
+      tender_type,
+      COUNT(*) as total,
+      SUM(CASE WHEN status = 'Won'  THEN 1 ELSE 0 END) as won,
+      SUM(CASE WHEN status = 'Lost' THEN 1 ELSE 0 END) as lost,
+      ROUND(
+        CAST(SUM(CASE WHEN status = 'Won' THEN 1 ELSE 0 END) AS REAL) /
+        NULLIF(SUM(CASE WHEN status IN ('Won','Lost') THEN 1 ELSE 0 END), 0) * 100, 1
+      ) as win_rate,
+      COALESCE(SUM(CASE WHEN status = 'Won' THEN order_value ELSE 0 END), 0) as total_value
+    FROM tenders
+    WHERE tender_type IS NOT NULL
+    GROUP BY tender_type
   `).all();
   return json(rows);
 }
@@ -350,20 +442,24 @@ const server = Bun.serve({
       if (path === "/api/tenders" && req.method === "POST") return createTender(await req.json());
       if (/^\/api\/tenders\/\d+$/.test(path)) {
         const id = path.split("/")[3];
-        if (req.method === "GET") return getTender(id);
-        if (req.method === "PUT") return updateTender(id, await req.json());
+        if (req.method === "GET")    return getTender(id);
+        if (req.method === "PUT")    return updateTender(id, await req.json());
         if (req.method === "DELETE") return deleteTender(id);
       }
 
       // Analytics
-      if (path === "/api/analytics/overview") return analyticsOverview();
-      if (path === "/api/analytics/yearly") return analyticsYearly();
-      if (path === "/api/analytics/buyers") return analyticsBuyers();
+      if (path === "/api/analytics/overview")   return analyticsOverview();
+      if (path === "/api/analytics/yearly")     return analyticsYearly();
+      if (path === "/api/analytics/buyers")     return analyticsBuyers();
       if (path === "/api/analytics/competitors") return analyticsCompetitors();
-      if (path === "/api/analytics/l1gap") return analyticsL1Gap();
-      if (path === "/api/analytics/pipeline") return analyticsPipeline();
-      if (path === "/api/analytics/funnel") return analyticsFunnel();
-      if (path === "/api/analytics/monthly") return analyticsMonthly();
+      if (path === "/api/analytics/l1gap")      return analyticsL1Gap();
+      if (path === "/api/analytics/pipeline")   return analyticsPipeline();
+      if (path === "/api/analytics/funnel")     return analyticsFunnel();
+      if (path === "/api/analytics/monthly")    return analyticsMonthly();
+      if (path === "/api/analytics/ministry")   return analyticsMinistry();
+      if (path === "/api/analytics/wintrend")   return analyticsWinTrend();
+      if (path === "/api/analytics/products")   return analyticsProducts();
+      if (path === "/api/analytics/tendertype") return analyticsTenderType();
 
       // Sync
       if (path === "/api/sync" && req.method === "POST") return executeSync(await req.json());

@@ -1,7 +1,8 @@
 import type {
   OverviewStats, YearlyStats, BuyerStats, CompetitorStats,
   L1GapStats, FunnelStats, MonthlyStats, SyncLog, SyncResult,
-  Tender, TendersResponse
+  Tender, TendersResponse,
+  MinistryStats, WinTrendStats, ProductStats, TenderTypeStats,
 } from "./types";
 
 async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
@@ -28,7 +29,7 @@ export const api = {
   deleteTender: (id: number) =>
     fetchApi<{ ok: boolean }>(`/tenders/${id}`, { method: "DELETE" }),
 
-  // Analytics
+  // Analytics — core
   getOverview:     () => fetchApi<OverviewStats>("/analytics/overview"),
   getYearly:       () => fetchApi<YearlyStats[]>("/analytics/yearly"),
   getBuyers:       () => fetchApi<BuyerStats[]>("/analytics/buyers"),
@@ -37,6 +38,12 @@ export const api = {
   getPipeline:     () => fetchApi<Tender[]>("/analytics/pipeline"),
   getFunnel:       () => fetchApi<FunnelStats[]>("/analytics/funnel"),
   getMonthly:      () => fetchApi<MonthlyStats[]>("/analytics/monthly"),
+
+  // Analytics — new
+  getMinistry:     () => fetchApi<MinistryStats[]>("/analytics/ministry"),
+  getWinTrend:     () => fetchApi<WinTrendStats[]>("/analytics/wintrend"),
+  getProducts:     () => fetchApi<ProductStats[]>("/analytics/products"),
+  getTenderType:   () => fetchApi<TenderTypeStats[]>("/analytics/tendertype"),
 
   // Sync
   executeSync:    (sql: string) =>
