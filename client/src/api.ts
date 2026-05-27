@@ -49,4 +49,7 @@ export const api = {
   executeSync:    (sql: string) =>
     fetchApi<SyncResult>("/sync", { method: "POST", body: JSON.stringify({ sql }) }),
   getSyncHistory: () => fetchApi<SyncLog[]>("/sync/history"),
+
+  // Lookups
+  getMinistries: () => fetchApi<string[]>("/ministries"),
 };

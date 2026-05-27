@@ -14,6 +14,11 @@ function fmtDate(s: string | null) {
   const [y, m, d] = s.split("-");
   return `${d}/${m}/${y}`;
 }
+function daysUntil(dateStr: string | null): number | null {
+  if (!dateStr) return null;
+  const diff = new Date(dateStr).getTime() - Date.now();
+  return Math.ceil(diff / 86_400_000);
+}
 
 function bidGap(ours: number | null, l1: number | null): string {
   if (!ours || !l1 || l1 === 0) return "—";
@@ -450,12 +455,18 @@ export default function Tenders() {
   const [statusFilter,    setStatusFilter]    = useState("");
   const [year,            setYear]            = useState("");
   const [ministry,        setMinistry]        = useState("");
+  const [allMinistries,   setAllMinistries]   = useState<string[]>([]);
   const [modal,           setModal]           = useState<{ mode: "add"|"edit"|"view"; tender: Partial<Tender>|null } | null>(null);
   const [deleteId,        setDeleteId]        = useState<number | null>(null);
   const [sortKey,         setSortKey]         = useState<SortKey>("tender_id");
   const [sortDir,         setSortDir]         = useState<SortDir>("desc");
 
   const LIMIT = 20;
+
+  // Load full ministry list once on mount
+  useEffect(() => {
+    api.getMinistries().then(setAllMinistries).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 300);
@@ -465,9 +476,10 @@ export default function Tenders() {
   const load = useCallback(async () => {
     setLoading(true);
     const params: Record<string, string> = { page: String(page), limit: String(LIMIT) };
-    if (debouncedSearch) params.search = debouncedSearch;
-    if (statusFilter)    params.status = statusFilter;
-    if (year)            params.year   = year;
+    if (debouncedSearch) params.search   = debouncedSearch;
+    if (statusFilter)    params.status   = statusFilter;
+    if (year)            params.year     = year;
+    if (ministry)        params.ministry = ministry;
     try {
       const { tenders, total } = await api.getTenders(params);
       setTenders(tenders);
@@ -475,10 +487,10 @@ export default function Tenders() {
     } finally {
       setLoading(false);
     }
-  }, [page, debouncedSearch, statusFilter, year]);
+  }, [page, debouncedSearch, statusFilter, year, ministry]);
 
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, year]);
+  useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, year, ministry]);
 
   async function handleDelete(id: number) {
     await api.deleteTender(id);
@@ -493,13 +505,7 @@ export default function Tenders() {
 
   const totalPages = Math.ceil(total / LIMIT);
 
-  // Client-side ministry filter (over the current page results)
-  const ministries = [...new Set(tenders.map((t) => t.ministry).filter(Boolean) as string[])].sort();
-  const filteredAndSorted = sortTenders(
-    ministry ? tenders.filter((t) => t.ministry === ministry) : tenders,
-    sortKey,
-    sortDir,
-  );
+  const filteredAndSorted = sortTenders(tenders, sortKey, sortDir);
 
   return (
     <div className="p-6 space-y-5">
@@ -546,7 +552,7 @@ export default function Tenders() {
         </select>
         <select className="input w-44 text-sm" value={ministry} onChange={(e) => setMinistry(e.target.value)}>
           <option value="">All Ministries</option>
-          {ministries.map((m) => <option key={m} value={m}>{m.length > 28 ? m.substring(0,28)+"…" : m}</option>)}
+          {allMinistries.map((m) => <option key={m} value={m}>{m.length > 28 ? m.substring(0,28)+"…" : m}</option>)}
         </select>
         {(search || statusFilter || year || ministry) && (
           <button
@@ -555,11 +561,6 @@ export default function Tenders() {
           >
             <X className="w-3 h-3" /> Clear
           </button>
-        )}
-        {ministry && (
-          <span className="text-xs text-slate-500 ml-auto">
-            {filteredAndSorted.length} of {tenders.length} shown
-          </span>
         )}
       </div>
 
@@ -603,7 +604,24 @@ export default function Tenders() {
                   <td className={`px-4 py-3 text-xs text-right ${bidGapColor(t.our_bid_price, t.l1_bid_price)}`}>
                     {bidGap(t.our_bid_price, t.l1_bid_price)}
                   </td>
-                  <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{fmtDate(t.end_date)}</td>
+                  <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
+                    {(() => {
+                      const days = daysUntil(t.end_date);
+                      const warn = days !== null && days >= 0 && days <= 7;
+                      return (
+                        <div className="flex items-center gap-1.5">
+                          {fmtDate(t.end_date)}
+                          {warn && (
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                              days! <= 2 ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"
+                            }`}>
+                              {days === 0 ? "Today" : `${days}d`}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-center gap-1">
                       <button onClick={() => setModal({ mode: "view", tender: t })}

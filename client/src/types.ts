@@ -54,8 +54,9 @@ export interface OverviewStats {
   total: number;
   won: number;
   lost: number;
-  active: number;    // Submitted + Technical Evaluation + Financial Evaluation
-  cancelled: number; // Cancelled + Disqualified
+  active: number;      // Submitted + Technical Evaluation + Financial Evaluation
+  cancelled: number;   // Cancelled only
+  disqualified: number; // Disqualified only
   win_rate: number;
   total_order_value: number;
   total_bid_value: number;

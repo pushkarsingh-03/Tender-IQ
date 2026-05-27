@@ -5,7 +5,7 @@ import {
   ComposedChart, Line,
 } from "recharts";
 import {
-  Trophy, TrendingDown, Clock, Ban, Percent,
+  Trophy, TrendingDown, Clock, Ban, XCircle,
   IndianRupee, AlertCircle, Users, Lightbulb, TrendingUp,
 } from "lucide-react";
 import { api } from "../api";
@@ -228,9 +228,8 @@ export default function Dashboard() {
         <StatCard label="Lost"            value={ov.lost}            icon={TrendingDown}  color="bg-rose-500" />
         <StatCard label="Active"          value={ov.active}          icon={Clock}         color="bg-amber-500"
                   sub="In evaluation" />
-        <StatCard label="Cancelled"       value={ov.cancelled}       icon={Ban}           color="bg-slate-500" />
-        <StatCard label="Win Rate"        value={`${ov.win_rate ?? 0}%`} icon={Percent}   color="bg-blue-500"
-                  sub="Won ÷ (Won + Lost)" />
+        <StatCard label="Cancelled"       value={ov.cancelled}               icon={Ban}        color="bg-slate-500" />
+        <StatCard label="Disqualified"    value={ov.disqualified ?? 0}       icon={XCircle}    color="bg-orange-500" />
         <StatCard label="Order Value Won" value={fmtRs(ov.total_order_value)} icon={IndianRupee} color="bg-violet-500"
                   sub="Total contracts won" />
         <StatCard label="Total Bid Value" value={fmtRs(ov.total_bid_value)} icon={TrendingUp} color="bg-cyan-500"

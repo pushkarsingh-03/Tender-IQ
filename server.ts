@@ -61,13 +61,14 @@ function isSafeSQL(sql: string): { safe: boolean; reason?: string } {
 
 // GET /api/tenders
 function getTenders(url: URL) {
-  const search = url.searchParams.get("search") || "";
-  const status = url.searchParams.get("status") || "";
-  const year   = url.searchParams.get("year")   || "";
-  const type   = url.searchParams.get("type")   || "";
-  const page   = parseInt(url.searchParams.get("page")  || "1");
-  const limit  = parseInt(url.searchParams.get("limit") || "20");
-  const offset = (page - 1) * limit;
+  const search   = url.searchParams.get("search")   || "";
+  const status   = url.searchParams.get("status")   || "";
+  const year     = url.searchParams.get("year")     || "";
+  const type     = url.searchParams.get("type")     || "";
+  const ministry = url.searchParams.get("ministry") || "";
+  const page     = parseInt(url.searchParams.get("page")  || "1");
+  const limit    = parseInt(url.searchParams.get("limit") || "20");
+  const offset   = (page - 1) * limit;
 
   let where = "WHERE 1=1";
   const params: Record<string, string | number> = {};
@@ -87,6 +88,10 @@ function getTenders(url: URL) {
   if (type) {
     where += ` AND tender_type = $type`;
     params.$type = type;
+  }
+  if (ministry) {
+    where += ` AND ministry = $ministry`;
+    params.$ministry = ministry;
   }
 
   const total = (db.query(`SELECT COUNT(*) as c FROM tenders ${where}`).get(params) as any).c;
@@ -156,10 +161,11 @@ function deleteTender(id: string) {
 
 // ──────────────────────────────────────────────
 // Analytics
-// Active  = Submitted | Technical Evaluation | Financial Evaluation
-// Won     = Won
-// Lost    = Lost
-// Cancelled = Cancelled | Disqualified
+// Active       = Submitted | Technical Evaluation | Financial Evaluation
+// Won          = Won
+// Lost         = Lost
+// Cancelled    = Cancelled only
+// Disqualified = Disqualified only
 // ──────────────────────────────────────────────
 function analyticsOverview() {
   const row = db.query(`
@@ -168,7 +174,8 @@ function analyticsOverview() {
       SUM(CASE WHEN status = 'Won'  THEN 1 ELSE 0 END) as won,
       SUM(CASE WHEN status = 'Lost' THEN 1 ELSE 0 END) as lost,
       SUM(CASE WHEN status IN ('Submitted','Technical Evaluation','Financial Evaluation') THEN 1 ELSE 0 END) as active,
-      SUM(CASE WHEN status IN ('Cancelled','Disqualified') THEN 1 ELSE 0 END) as cancelled,
+      SUM(CASE WHEN status = 'Cancelled'    THEN 1 ELSE 0 END) as cancelled,
+      SUM(CASE WHEN status = 'Disqualified' THEN 1 ELSE 0 END) as disqualified,
       ROUND(
         CAST(SUM(CASE WHEN status = 'Won'  THEN 1 ELSE 0 END) AS REAL) /
         NULLIF(SUM(CASE WHEN status IN ('Won','Lost') THEN 1 ELSE 0 END), 0) * 100,
@@ -425,6 +432,16 @@ function getSyncHistory() {
   return json(rows);
 }
 
+// GET /api/ministries — distinct ministry list for filter dropdown
+function getMinistriesList() {
+  const rows = db.query(`
+    SELECT DISTINCT ministry FROM tenders
+    WHERE ministry IS NOT NULL AND ministry != ''
+    ORDER BY ministry ASC
+  `).all() as { ministry: string }[];
+  return json(rows.map((r) => r.ministry));
+}
+
 // ──────────────────────────────────────────────
 // Server
 // ──────────────────────────────────────────────
@@ -446,6 +463,9 @@ const server = Bun.serve({
         if (req.method === "PUT")    return updateTender(id, await req.json());
         if (req.method === "DELETE") return deleteTender(id);
       }
+
+      // Ministries
+      if (path === "/api/ministries" && req.method === "GET") return getMinistriesList();
 
       // Analytics
       if (path === "/api/analytics/overview")   return analyticsOverview();
