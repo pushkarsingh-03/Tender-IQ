@@ -9,19 +9,36 @@ Email content:
 [PASTE YOUR GEM EMAIL TEXT HERE]
 
 My tenders table has these columns:
-tender_id (TEXT, primary key), tender_type, buyer_name, buyer_dept, ministry,
-product_desc, quantity, won_lost (values: WON/Lost/Pending/Cancelled),
-bid_status, start_date (YYYY-MM-DD), end_date (YYYY-MM-DD), remarks,
-our_bid_price (number), l1_bid_price (number), l1_bidder_name,
-consignee_address, contract_no, contract_date (YYYY-MM-DD),
-order_value (number), contract_status, office_name, evaluation_method.
+- tender_id (TEXT, primary key — format: GEM/YYYY/B/XXXXXXX or GEM/YYYY/R/XXXXXXX)
+- tender_type (TEXT — 'BID' or 'RA')
+- status (TEXT — use EXACTLY one of: 'Submitted', 'Technical Evaluation', 'Financial Evaluation', 'Won', 'Lost', 'Disqualified', 'Cancelled')
+- buyer_name, buyer_dept, ministry, office_name (TEXT)
+- consignee_name, consignee_address (TEXT)
+- product_desc (TEXT), quantity (INTEGER)
+- evaluation_method (TEXT)
+- start_date, end_date (TEXT — format: YYYY-MM-DD)
+- our_bid_price, l1_bid_price, l2_bid_price (REAL — store amount in ₹, numbers only)
+- l1_bidder_name, l2_bidder_name (TEXT)
+- is_scheduled (INTEGER — 0 or 1), schedule_count (INTEGER)
+- contract_no (TEXT), contract_date (TEXT — format: YYYY-MM-DD)
+- order_value (REAL), contract_status (TEXT)
+- remarks (TEXT)
+
+Map email outcome to status:
+- Bid submitted / awaiting evaluation → 'Submitted'
+- Technical evaluation in progress → 'Technical Evaluation'
+- Financial evaluation in progress → 'Financial Evaluation'
+- We won the bid / contract awarded to us → 'Won'
+- We lost the bid / contract awarded to another → 'Lost'
+- We were disqualified / non-responsive → 'Disqualified'
+- Tender cancelled / withdrawn → 'Cancelled'
 
 Please:
 1. Extract the Tender ID from the email (format: GEM/YYYY/B/XXXXXXX)
 2. Generate the appropriate UPDATE statement
-3. Only update fields that are mentioned in the email
+3. Only include fields that are explicitly mentioned in the email
 4. Use this format:
-   UPDATE tenders SET bid_status = '...', won_lost = '...' WHERE tender_id = 'GEM/...';`;
+   UPDATE tenders SET status = '...', l1_bid_price = ..., l1_bidder_name = '...' WHERE tender_id = 'GEM/...';`;
 
 export default function Sync() {
   const [sql,       setSql]       = useState("");
@@ -143,7 +160,7 @@ export default function Sync() {
 
         <textarea
           className="input font-mono text-xs h-36 resize-none"
-          placeholder={`Paste the SQL from Claude here, e.g.:\n\nUPDATE tenders SET bid_status = 'Bid Award', won_lost = 'Lost', l1_bid_price = 45000, l1_bidder_name = 'S F Tubes' WHERE tender_id = 'GEM/2025/B/6637254';`}
+          placeholder={`Paste the SQL from Claude here, e.g.:\n\nUPDATE tenders SET status = 'Lost', l1_bid_price = 45000, l1_bidder_name = 'S F Tubes' WHERE tender_id = 'GEM/2025/B/6637254';`}
           value={sql}
           onChange={(e) => { setSql(e.target.value); setError(""); setResult(null); }}
         />
@@ -195,16 +212,16 @@ export default function Sync() {
         <div className="space-y-2 text-xs">
           {[
             {
-              label: "Bid evaluated (financial)",
-              sql: `UPDATE tenders SET bid_status = 'Financial Evaluation', won_lost = 'Pending' WHERE tender_id = 'GEM/2025/B/6637254';`,
+              label: "Bid in financial evaluation",
+              sql: `UPDATE tenders SET status = 'Financial Evaluation' WHERE tender_id = 'GEM/2025/B/6637254';`,
             },
             {
               label: "Tender awarded — we won",
-              sql: `UPDATE tenders SET won_lost = 'WON', bid_status = 'Bid Award', contract_no = 'GEMC-123456789', contract_date = '2025-06-15', order_value = 85000 WHERE tender_id = 'GEM/2025/B/6637254';`,
+              sql: `UPDATE tenders SET status = 'Won', contract_no = 'GEMC-123456789', contract_date = '2025-06-15', order_value = 85000 WHERE tender_id = 'GEM/2025/B/6637254';`,
             },
             {
               label: "Tender lost with L1 info",
-              sql: `UPDATE tenders SET won_lost = 'Lost', bid_status = 'Bid Award', l1_bid_price = 42000, l1_bidder_name = 'S F Tubes Pvt Ltd' WHERE tender_id = 'GEM/2025/B/6711414';`,
+              sql: `UPDATE tenders SET status = 'Lost', l1_bid_price = 42000, l1_bidder_name = 'S F Tubes Pvt Ltd' WHERE tender_id = 'GEM/2025/B/6711414';`,
             },
           ].map(({ label, sql }) => (
             <div key={label} className="bg-slate-50 rounded-lg p-3">

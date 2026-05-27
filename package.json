@@ -8,7 +8,8 @@
     "migrate": "bun run migrate.ts",
     "build": "bun run --cwd client build",
     "db:dump": "bun -e \"import { initDb } from './db.ts'; initDb();\" && sqlite3 tenderiq.db .dump > db_snapshot.sql && echo 'DB dumped to db_snapshot.sql'",
-    "db:restore": "sqlite3 tenderiq.db < db_snapshot.sql && echo 'DB restored from db_snapshot.sql'"
+    "db:restore": "sqlite3 tenderiq.db < db_snapshot.sql && echo 'DB restored from db_snapshot.sql'",
+    "update": "bash update.sh"
   },
   "dependencies": {
     "xlsx": "^0.18.5"

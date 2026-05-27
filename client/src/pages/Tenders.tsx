@@ -156,6 +156,13 @@ function Field({
   disabled?: boolean; type?: string; options?: string[]; mono?: boolean;
 }) {
   const base = `input text-sm ${mono ? "font-mono" : ""} ${disabled ? "bg-slate-50 text-slate-600 cursor-default" : ""}`;
+
+  // Date fields in view mode: show as formatted text instead of broken disabled date-picker
+  function formatDateDisplay(v: any) {
+    if (!v) return "—";
+    try { const [y, m, d] = String(v).split("-"); return `${d}/${m}/${y}`; } catch { return v; }
+  }
+
   return (
     <div>
       {label && <label className="label">{label}</label>}
@@ -166,6 +173,8 @@ function Field({
       ) : type === "textarea" ? (
         <textarea className={`${base} h-20 resize-none`} value={value || ""} disabled={disabled}
                   onChange={(e) => onChange(e.target.value)} />
+      ) : type === "date" && disabled ? (
+        <div className={`${base} flex items-center`}>{formatDateDisplay(value)}</div>
       ) : (
         <input className={base} type={type} value={value ?? ""} disabled={disabled}
                onChange={(e) => onChange(e.target.value)} />
