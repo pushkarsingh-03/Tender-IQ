@@ -151,6 +151,7 @@ export default function Dashboard() {
   const [monthly,      setMonthly]      = useState<MonthlyStats[]>([]);
   const [pipeline,     setPipeline]     = useState<Tender[]>([]);
   const [loading,      setLoading]      = useState(true);
+  const [error,        setError]        = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -171,7 +172,7 @@ export default function Dashboard() {
       setFunnel(fn);
       setMonthly(mo);
       setPipeline(pi);
-    }).finally(() => setLoading(false));
+    }).catch(() => setError(true)).finally(() => setLoading(false));
   }, []);
 
   if (loading) {
@@ -185,7 +186,25 @@ export default function Dashboard() {
     );
   }
 
-  const ov = overview!;
+  if (error || !overview) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center space-y-3">
+          <AlertCircle className="w-10 h-10 text-rose-400 mx-auto" />
+          <p className="text-slate-700 font-medium text-sm">Failed to load dashboard data.</p>
+          <p className="text-slate-400 text-xs">Check that the server is running and refresh the page.</p>
+          <button
+            onClick={() => { setError(false); setLoading(true); window.location.reload(); }}
+            className="btn-secondary text-xs mt-2"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const ov = overview;
 
   return (
     <div className="p-6 space-y-6">

@@ -6,7 +6,7 @@ import {
 } from "recharts";
 import { TrendingUp, Target, BarChart2, Users } from "lucide-react";
 import { api } from "../api";
-import type { BuyerStats, WinTrendStats, ProductStats, TenderTypeStats } from "../types";
+import type { BuyerStats, WinTrendStats, ProductStats, TenderTypeStats, FunnelStats } from "../types";
 
 // ── Helpers ───────────────────────────────────────────────────────────
 function fmtRs(n: number | null | undefined) {
@@ -42,7 +42,54 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-// ── Win Rate Trend ────────────────────────────────────────────────────
+// ── Status Distribution ───────────────────────────────────────────────
+const STATUS_PALETTE: Record<string, string> = {
+  "Won":                  "#10b981",
+  "Lost":                 "#f43f5e",
+  "Submitted":            "#94a3b8",
+  "Technical Evaluation": "#3b82f6",
+  "Financial Evaluation": "#6366f1",
+  "Disqualified":         "#f97316",
+  "Cancelled":            "#9ca3af",
+};
+
+function StatusDistribution({ data }: { data: FunnelStats[] }) {
+  if (data.length === 0) return <Empty />;
+  const max   = Math.max(...data.map((d) => d.count), 1);
+  const total = data.reduce((s, d) => s + d.count, 0);
+  return (
+    <div className="space-y-2.5">
+      {data.map((d) => {
+        const pct   = total > 0 ? ((d.count / total) * 100).toFixed(1) : "0.0";
+        const color = STATUS_PALETTE[d.status] ?? "#6366f1";
+        const barW  = Math.max((d.count / max) * 100, 2);
+        return (
+          <div key={d.status} className="flex items-center gap-3">
+            <div className="w-40 text-xs text-slate-600 font-medium flex-shrink-0 truncate" title={d.status}>
+              {d.status}
+            </div>
+            <div className="flex-1 bg-slate-100 rounded-full h-5 relative overflow-hidden">
+              <div
+                className="h-5 rounded-full transition-all duration-500 flex items-center justify-end pr-2"
+                style={{ width: `${barW}%`, background: color }}
+              >
+                {barW > 18 && (
+                  <span className="text-white text-[10px] font-semibold">{d.count}</span>
+                )}
+              </div>
+            </div>
+            <div className="w-20 text-right text-xs flex-shrink-0">
+              <span className="font-semibold text-slate-700">{d.count}</span>
+              <span className="text-slate-400 ml-1">({pct}%)</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+
 function WinRateTrendChart({ data }: { data: WinTrendStats[] }) {
   if (data.length === 0) return <Empty />;
   return (
@@ -291,6 +338,7 @@ export default function Analytics() {
   const [winTrend,   setWinTrend]   = useState<WinTrendStats[]>([]);
   const [products,   setProducts]   = useState<ProductStats[]>([]);
   const [tenderType, setTenderType] = useState<TenderTypeStats[]>([]);
+  const [funnel,     setFunnel]     = useState<FunnelStats[]>([]);
   const [loading,    setLoading]    = useState(true);
 
   useEffect(() => {
@@ -299,11 +347,13 @@ export default function Analytics() {
       api.getWinTrend(),
       api.getProducts(),
       api.getTenderType(),
-    ]).then(([by, wt, pr, tt]) => {
+      api.getFunnel(),
+    ]).then(([by, wt, pr, tt, fn]) => {
       setBuyers(by);
       setWinTrend(wt);
       setProducts(pr);
       setTenderType(tt);
+      setFunnel(fn);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -315,6 +365,15 @@ export default function Analytics() {
       <div>
         <h1 className="text-xl font-bold text-slate-900">Analytics</h1>
         <p className="text-slate-500 text-sm mt-0.5">Deep-dive into bid performance, trends &amp; buyer insights</p>
+      </div>
+
+      {/* ── Row 0: Status Distribution ── */}
+      <div className="card p-5">
+        <h2 className="text-sm font-semibold text-slate-800 mb-1 flex items-center gap-2">
+          <BarChart2 className="w-4 h-4 text-indigo-500" /> Status Distribution
+        </h2>
+        <p className="text-xs text-slate-400 mb-4">All tenders broken down by current status</p>
+        <StatusDistribution data={funnel} />
       </div>
 
       {/* ── Row 1: Win Rate Trend ── */}

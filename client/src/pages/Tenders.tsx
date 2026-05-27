@@ -61,6 +61,11 @@ function sortTenders(tenders: Tender[], key: SortKey, dir: SortDir): Tender[] {
     if (key === "gap_pct") {
       av = (a.our_bid_price && a.l1_bid_price) ? (a.our_bid_price - a.l1_bid_price) / a.l1_bid_price : -Infinity;
       bv = (b.our_bid_price && b.l1_bid_price) ? (b.our_bid_price - b.l1_bid_price) / b.l1_bid_price : -Infinity;
+    } else if (key === "end_date") {
+      // Null/empty dates always sort to the end regardless of direction
+      const sentinel = dir === "asc" ? "9999-99-99" : "0000-00-00";
+      av = (a as any)[key] || sentinel;
+      bv = (b as any)[key] || sentinel;
     } else {
       av = (a as any)[key] ?? "";
       bv = (b as any)[key] ?? "";
